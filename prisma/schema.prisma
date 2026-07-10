@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  password      String?
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  posts         SocialPost[]
+  exhibitions   Exhibition[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model SocialPost {
+  id            String    @id @default(cuid())
+  userId        String
+  contentText   String?
+  mediaUrls     String    // JSON array of image/video URLs
+  contentType   String    @default("image") // image, text, video, link
+  source        String    @default("upload") // upload, qzone, wechat
+  originalUrl   String?
+  postedAt      DateTime?
+  location      String?
+  aiCategory    String?   // food, travel, music, emotion, life, ...
+  aiTags        String?   // JSON array
+  aiSentiment   String?   // positive, neutral, negative
+  aiDescription String?   // AI generated description
+  isProcessed   Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exhibitions   ExhibitionPost[]
+
+  @@index([userId])
+  @@index([aiCategory])
+}
+
+model Exhibition {
+  id          String    @id @default(cuid())
+  userId      String
+  title       String
+  theme       String    // food, travel, emotion, music, life, mix
+  coverImage  String?
+  description String?   // AI generated curator's note
+  shareToken  String    @unique
+  isPublic    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  posts       ExhibitionPost[]
+
+  @@index([userId])
+  @@index([shareToken])
+}
+
+model ExhibitionPost {
+  id            String   @id @default(cuid())
+  exhibitionId  String
+  postId        String
+  sortOrder     Int      @default(0)
+
+  exhibition    Exhibition @relation(fields: [exhibitionId], references: [id], onDelete: Cascade)
+  post          SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([exhibitionId, postId])
+}
