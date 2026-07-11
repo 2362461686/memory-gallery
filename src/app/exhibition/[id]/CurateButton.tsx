@@ -13,7 +13,7 @@ export default function CurateButton({ postCount }: { postCount: number }) {
   }
   return (
     <div>
-      <button onClick={handleCurate} disabled={loading} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium transition-colors disabled:opacity-50 shadow-lg shadow-indigo-500/25">
+      <button onClick={handleCurate} disabled={loading} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:from-fuchsia-600 hover:to-purple-600 text-white text-sm font-medium transition-all disabled:opacity-50 shadow-lg shadow-fuchsia-500/25">
         <IconSparkles size={16} />{loading ? "AI 策展中..." : `AI 策展 (${postCount}条)`}
       </button>
       {error && <p className="text-red-500 text-xs mt-2">{error}</p>}

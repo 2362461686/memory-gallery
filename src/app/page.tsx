@@ -25,7 +25,7 @@ export default function Home() {
       <div className="text-center max-w-3xl">
         {/* Hero */}
         <h1 className="text-5xl sm:text-6xl md:text-8xl font-black tracking-tight leading-none mb-8">
-          <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-fuchsia-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent text-glow">
             Memory
             <br />
             Gallery
@@ -44,7 +44,7 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center mb-20">
           <Link
             href="/register"
-            className="inline-flex items-center justify-center px-8 py-3.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-medium text-sm transition-colors shadow-lg shadow-indigo-500/25"
+            className="inline-flex items-center justify-center px-8 py-3.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:from-fuchsia-600 hover:to-purple-600 text-white font-medium text-sm transition-all duration-300 shadow-lg shadow-fuchsia-500/25 glow-purple"
           >
             开始策展
             <svg className="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

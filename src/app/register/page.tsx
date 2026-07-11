@@ -43,7 +43,7 @@ export default function RegisterPage() {
             <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">邮箱</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} required className={inputCls} placeholder="your@email.com" /></div>
             <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">密码</label><input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} className={inputCls} placeholder="至少 6 位" /></div>
             <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">确认密码</label><input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className={inputCls} placeholder="再次输入密码" /></div>
-            <button type="submit" disabled={loading} className="w-full py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium transition-colors disabled:opacity-50 shadow-lg shadow-indigo-500/25">{loading ? "注册中..." : "注册"}</button>
+            <button type="submit" disabled={loading} className="w-full py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:from-fuchsia-600 hover:to-purple-600 text-white text-sm font-medium transition-all disabled:opacity-50 shadow-lg shadow-fuchsia-500/25">{loading ? "注册中..." : "注册"}</button>
           </form>
           <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">已有账号？ <Link href="/login" className="text-indigo-500 dark:text-indigo-400 font-medium hover:underline">登录</Link></p>
         </div>

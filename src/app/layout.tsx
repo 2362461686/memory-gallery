@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BackgroundFX } from "@/components/ClientLayout";
 import ClickEffect from "@/components/ClickEffect";
+import StarField from "@/components/StarField";
 import "./globals.css";
 
 const notoSerif = Noto_Serif_SC({
@@ -55,7 +56,7 @@ export default async function RootLayout({
               <div
                 className="absolute inset-0 z-[-8] opacity-40 dark:opacity-15 mix-blend-color transition-opacity duration-700"
                 style={{
-                  background: "linear-gradient(-45deg, #a78bfa, #f9a8d4, #93c5fd, #a5f3fc)",
+                  background: "linear-gradient(-45deg, #c084fc, #f472b6, #67e8f9, #a5b4fc, #f9a8d4)",
                   backgroundSize: "400% 400%",
                   animation: "gradientMove 15s ease infinite",
                 }}
@@ -65,7 +66,8 @@ export default async function RootLayout({
               <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/50 dark:bg-indigo-900/20 blur-[100px] rounded-full z-[-7] md:mix-blend-overlay" />
               <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-pink-200/50 dark:bg-purple-900/30 blur-[100px] rounded-full z-[-7] md:mix-blend-overlay" />
 
-              {/* Fireflies (dark only) */}
+              {/* StarField + Fireflies */}
+              <StarField />
               <BackgroundFX />
             </div>
 
@@ -74,7 +76,7 @@ export default async function RootLayout({
               <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
                 <Link
                   href="/"
-                  className="text-lg font-black tracking-tight bg-gradient-to-r from-indigo-500 to-pink-500 bg-clip-text text-transparent"
+                  className="text-lg font-black tracking-tight bg-gradient-to-r from-fuchsia-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent"
                 >
                   Memory Gallery
                 </Link>
@@ -106,7 +108,7 @@ export default async function RootLayout({
                   ) : (
                     <Link
                       href="/login"
-                      className="px-4 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-medium transition-colors"
+                      className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:from-fuchsia-600 hover:to-purple-600 text-white text-xs font-medium transition-all"
                     >
                       登录
                     </Link>

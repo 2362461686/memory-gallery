@@ -29,7 +29,7 @@ export default async function DashboardPage() {
             <IconLayout className="text-slate-400" size={14} />你的数字记忆展厅
           </p>
         </div>
-        <Link href="/import" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium transition-colors shadow-lg shadow-indigo-500/25">
+        <Link href="/import" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:from-fuchsia-600 hover:to-purple-600 text-white text-sm font-medium transition-all shadow-lg shadow-fuchsia-500/25">
           <IconPlus size={16} />导入新内容
         </Link>
       </div>
@@ -40,7 +40,7 @@ export default async function DashboardPage() {
           </div>
           <h2 className="text-lg font-semibold text-slate-500 dark:text-slate-400 mb-2">还没有展览</h2>
           <p className="text-sm text-slate-400 dark:text-slate-500 mb-8 max-w-xs mx-auto">导入照片或 QQ 空间内容，AI 会帮你策展</p>
-          <Link href="/import" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium transition-colors shadow-lg shadow-indigo-500/25">
+          <Link href="/import" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:from-fuchsia-600 hover:to-purple-600 text-white text-sm font-medium transition-all shadow-lg shadow-fuchsia-500/25">
             <IconPlus size={16} />开始导入
           </Link>
         </div>

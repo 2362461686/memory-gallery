@@ -71,7 +71,7 @@ function LoginForm() {
             </div>
             <button
               type="submit" disabled={loading}
-              className="w-full py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium transition-colors disabled:opacity-50 shadow-lg shadow-indigo-500/25"
+              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:from-fuchsia-600 hover:to-purple-600 text-white text-sm font-medium transition-all disabled:opacity-50 shadow-lg shadow-fuchsia-500/25"
             >
               {loading ? "登录中..." : "登录"}
             </button>

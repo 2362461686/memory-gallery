@@ -5,7 +5,7 @@ import { IconUpload, IconMessageCircle, IconImage } from "@/lib/icons";
 
 type ImportTab = "upload" | "qzone";
 const glassInput = "w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none text-sm text-slate-600 dark:text-slate-300 font-mono";
-const btnPrimary = "w-full py-3 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium transition-colors disabled:opacity-50 shadow-lg shadow-indigo-500/25";
+const btnPrimary = "w-full py-3 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:from-fuchsia-600 hover:to-purple-600 text-white text-sm font-medium transition-all disabled:opacity-50 shadow-lg shadow-fuchsia-500/25";
 
 export default function ImportPage() {
   const router = useRouter();
