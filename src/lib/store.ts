@@ -178,6 +178,15 @@ export function createExhibitionPost(exhibitionId: string, postId: string) {
   return ep;
 }
 
+export function getExhibitionPostCounts(exhibitionIds: string[]) {
+  const db = readDB();
+  const counts: Record<string, number> = {};
+  for (const id of exhibitionIds) {
+    counts[id] = db.exhibitionPosts.filter((ep) => ep.exhibitionId === id).length;
+  }
+  return counts;
+}
+
 export function findExhibitionPosts(exhibitionId: string) {
   const db = readDB();
   const eps = db.exhibitionPosts.filter((ep) => ep.exhibitionId === exhibitionId);

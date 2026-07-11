@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { IconSparkles } from "@/lib/icons";
 
 export default function CurateButton({ postCount }: { postCount: number }) {
   const router = useRouter();
@@ -29,9 +30,10 @@ export default function CurateButton({ postCount }: { postCount: number }) {
       <button
         onClick={handleCurate}
         disabled={loading}
-        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-400 to-purple-500 text-white font-medium text-sm shadow-md shadow-purple-200/50 hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50"
+        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors disabled:opacity-50"
       >
-        {loading ? "AI 策展中..." : `🤖 AI 策展 (${postCount}条)`}
+        <IconSparkles size={16} />
+        {loading ? "AI 策展中..." : `AI 策展 (${postCount}条)`}
       </button>
       {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
     </div>
