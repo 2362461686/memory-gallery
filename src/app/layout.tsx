@@ -5,6 +5,8 @@ import { Noto_Serif_SC } from "next/font/google";
 import Link from "next/link";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { BackgroundFX } from "@/components/ClientLayout";
+import ClickEffect from "@/components/ClickEffect";
 import "./globals.css";
 
 const notoSerif = Noto_Serif_SC({
@@ -62,6 +64,9 @@ export default async function RootLayout({
               {/* Color blobs */}
               <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/50 dark:bg-indigo-900/20 blur-[100px] rounded-full z-[-7] md:mix-blend-overlay" />
               <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-pink-200/50 dark:bg-purple-900/30 blur-[100px] rounded-full z-[-7] md:mix-blend-overlay" />
+
+              {/* Fireflies (dark only) */}
+              <BackgroundFX />
             </div>
 
             {/* Navigation */}
@@ -119,6 +124,7 @@ export default async function RootLayout({
               <p>Memory Gallery - 把你的数字生活变成一场展览</p>
             </footer>
           </div>
+          <ClickEffect />
         </ThemeProvider>
       </body>
     </html>
