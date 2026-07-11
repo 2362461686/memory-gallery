@@ -5,6 +5,7 @@ import { Noto_Serif_SC } from "next/font/google";
 import Link from "next/link";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import LogoutButton from "@/components/LogoutButton";
 import { BackgroundFX } from "@/components/ClientLayout";
 import ClickEffect from "@/components/ClickEffect";
 import StarField from "@/components/StarField";
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
 async function getUser() {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
+    const token = cookieStore.get("token")?.value;
     if (!token) return null;
     const payload = await verifyToken(token);
     return payload as { id: string; email: string; name?: string } | null;
@@ -104,6 +105,7 @@ export default async function RootLayout({
                       <span className="text-slate-400 dark:text-slate-500 text-xs">
                         {user.name || user.email?.split("@")[0]}
                       </span>
+                      <LogoutButton />
                     </>
                   ) : (
                     <Link
