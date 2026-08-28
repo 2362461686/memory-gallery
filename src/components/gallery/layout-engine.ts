@@ -109,8 +109,8 @@ export interface TextPageData {
   text: string;
   chapter: number;
   color?: string;
-  /** 气泡形态:独白用云朵,短句用呐喊框,其余用手写旁白 */
-  variant: "thought" | "shout" | "narration";
+  /** 短句做大字扉页,中长句做手写旁白;感叹语气才升级成呐喊 */
+  variant: "title" | "narration" | "shout";
 }
 
 /** 拟声词库:词 + 表现风格 */
@@ -145,7 +145,7 @@ export function paginate(chapters: Chapter[]): (PhotoPageData | TextPageData)[] 
         text: note.caption,
         chapter: chapter.no,
         color: chapter.color,
-        variant: note.caption.length <= 12 ? "shout" : note.caption.length <= 60 ? "thought" : "narration",
+        variant: pickTextVariant(note.caption),
       });
     }
 
@@ -179,6 +179,18 @@ export function paginate(chapters: Chapter[]): (PhotoPageData | TextPageData)[] 
     }
   }
   return pages;
+}
+
+/**
+ * 文字页形态:先看语气,再看长度。
+ * 呐喊框只留给真正在喊的句子 —— 平静的短句配爆炸框会很荒唐。
+ */
+function pickTextVariant(text: string): "title" | "narration" | "shout" {
+  const t = text.trim();
+  const exclaims = (t.match(/[!!]/g) || []).length;
+  if (exclaims >= 1 && t.length <= 16) return "shout";
+  if (t.length <= 16) return "title";
+  return "narration";
 }
 
 /** 一话的色调:取这话里兴趣度最高那张的主色 */

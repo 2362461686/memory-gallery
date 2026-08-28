@@ -228,25 +228,51 @@ function PhotoPage({ page }: { page: PhotoPageData }) {
 
 function TextPage({ page }: { page: TextPageData }) {
   const { text, chapter, variant } = page;
-  const bubble = variant === "thought" ? "thought-bubble" : variant === "shout" ? "shout-bubble" : "";
+
   return (
-    <div className="h-full relative flex items-center justify-center">
-      <span className="absolute -top-1 right-0 z-10 text-[0.65rem] font-black opacity-35 tracking-widest">
+    <div className="h-full relative overflow-hidden">
+      <span className="absolute -top-1 right-0 z-20 text-[0.65rem] font-black opacity-35 tracking-widest">
         第 {chapter} 话
       </span>
 
-      {/* 网点底纹:纯文字页不至于空得发慌 */}
-      <div className="absolute inset-x-8 inset-y-10 tone-dots opacity-25 rounded-lg pointer-events-none" />
-
-      {variant === "narration" ? (
-        <div className="relative max-w-lg px-6">
-          <span className="manga-sfx manga-sfx-hollow absolute -top-8 -left-2 text-5xl opacity-40">“</span>
-          <p className="handwriting text-lg sm:text-xl font-bold leading-loose whitespace-pre-wrap">{text}</p>
-          <div className="h-[3px] bg-[var(--ink)] w-20 mt-5" />
+      {/* 扉页:短句靠排版立住 —— 竖排大字、网点半幅、墨条压边,不套花哨的框 */}
+      {variant === "title" && (
+        <div className="h-full flex items-stretch">
+          {/* 左半:网点色块 */}
+          <div className="relative w-[38%] shrink-0 tone-dots opacity-40 border-r-[3px] border-[var(--ink)]" />
+          {/* 右半:竖排标题 */}
+          <div className="flex-1 flex items-center justify-center px-6">
+            <p
+              className="font-black leading-[1.35] text-3xl sm:text-4xl"
+              style={{ writingMode: "vertical-rl", textOrientation: "upright", letterSpacing: "0.12em", maxHeight: "82%" }}
+            >
+              {text}
+            </p>
+          </div>
+          {/* 压在骑缝上的墨条 */}
+          <div className="absolute left-[38%] top-8 -translate-x-1/2 w-3 h-16 bg-[var(--accent)] border-[3px] border-[var(--ink)]" />
         </div>
-      ) : (
-        <div className={`relative ${bubble} max-w-md z-10`}>
-          <p className={`font-black leading-relaxed whitespace-pre-wrap ${variant === "shout" ? "text-2xl sm:text-3xl text-center" : "text-base sm:text-lg"}`}>
+      )}
+
+      {/* 旁白:手写体横排,像作者在页边写的话 */}
+      {variant === "narration" && (
+        <div className="h-full flex items-center justify-center px-4">
+          <div className="absolute inset-x-10 inset-y-12 tone-dots opacity-15 rounded pointer-events-none" />
+          <div className="relative max-w-lg">
+            <div className="h-[3px] bg-[var(--ink)] w-14 mb-5" />
+            <p className="handwriting text-lg sm:text-2xl font-bold leading-[2] whitespace-pre-wrap">
+              {text}
+            </p>
+            <div className="h-[3px] bg-[var(--ink)] w-14 mt-5 ml-auto" />
+          </div>
+        </div>
+      )}
+
+      {/* 呐喊:只有真带感叹号的短句才走这里 */}
+      {variant === "shout" && (
+        <div className="h-full flex items-center justify-center relative">
+          <div className="absolute inset-0 focus-lines opacity-70" />
+          <p className="manga-sfx manga-sfx-loud relative text-4xl sm:text-6xl text-center px-8 leading-tight">
             {text}
           </p>
         </div>

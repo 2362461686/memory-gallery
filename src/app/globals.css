@@ -243,40 +243,6 @@
   background-size: 6px 6px;
 }
 
-/* ---------- 思考气泡(云朵) ---------- */
-
-.thought-bubble {
-  position: relative;
-  background: var(--paper);
-  border: 3px solid var(--ink);
-  border-radius: 44% 56% 52% 48% / 52% 48% 55% 45%;
-  padding: 1.1rem 1.4rem;
-}
-.thought-bubble::before,
-.thought-bubble::after {
-  content: "";
-  position: absolute;
-  background: var(--paper);
-  border: 3px solid var(--ink);
-  border-radius: 50%;
-}
-.thought-bubble::before { width: 14px; height: 14px; bottom: -18px; left: 30px; }
-.thought-bubble::after { width: 8px; height: 8px; bottom: -30px; left: 20px; }
-
-/* ---------- 呐喊气泡(爆炸框) ---------- */
-
-.shout-bubble {
-  position: relative;
-  background: var(--paper);
-  border: 3px solid var(--ink);
-  padding: 1rem 1.3rem;
-  clip-path: polygon(
-    0% 12%, 6% 6%, 14% 10%, 24% 2%, 36% 8%, 48% 0%, 60% 7%, 72% 2%, 84% 9%, 94% 4%, 100% 14%,
-    96% 26%, 100% 38%, 95% 52%, 100% 66%, 94% 78%, 100% 90%, 90% 96%, 78% 92%, 66% 100%,
-    54% 93%, 42% 100%, 30% 94%, 18% 99%, 8% 92%, 0% 86%, 4% 72%, 0% 58%, 5% 44%, 0% 28%
-  );
-}
-
 /* ---------- 手写体标题(卷首/旁白) ---------- */
 
 .handwriting {

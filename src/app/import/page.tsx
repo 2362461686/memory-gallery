@@ -111,7 +111,7 @@ export default function ImportPage() {
       {tab === "text" ? (
         <div className="glass-card p-6">
           <p className="text-sm font-black mb-1">没有照片的那天,也值得记一页</p>
-          <p className="text-xs opacity-55 font-bold mb-4">短句会做成呐喊框,中等长度做成思考气泡,长段落做成手写旁白页。</p>
+          <p className="text-xs opacity-55 font-bold mb-4">短句排成竖排大字扉页,长一点的做成手写旁白页;带感叹号的短句会变成呐喊。</p>
           <textarea
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
@@ -123,7 +123,11 @@ export default function ImportPage() {
           <div className="flex justify-between items-center mt-2">
             <span className="text-xs opacity-45 font-bold tabular-nums">{noteText.length} / 500</span>
             <span className="text-xs opacity-45 font-bold">
-              {noteText.length <= 12 ? "→ 呐喊框" : noteText.length <= 60 ? "→ 思考气泡" : "→ 手写旁白"}
+              {/[!!]/.test(noteText) && noteText.trim().length <= 16
+                ? "→ 呐喊"
+                : noteText.trim().length <= 16
+                  ? "→ 竖排扉页"
+                  : "→ 手写旁白"}
             </span>
           </div>
           <div className="grid sm:grid-cols-2 gap-3 mt-4">
