@@ -42,25 +42,26 @@ export async function POST(request: Request) {
     let description: string;
     let theme: string;
     let aiUsed = false;
+    let pendingAiUpdates: [string, Record<string, string>][] = [];
 
     try {
       const curation = await curatePosts(posts);
-      for (const [postId, category] of Object.entries(curation.postCategories)) {
-        updatePost(postId, {
-          aiCategory: category.category,
-          aiTags: JSON.stringify(category.tags),
-          aiSentiment: category.sentiment,
-          aiDescription: category.description,
-          isProcessed: true,
-        });
-      }
+      // 只暂存,先不落库 —— 回忆集建成之前不许把内容标记为已消费
+      pendingAiUpdates = Object.entries(curation.postCategories).map(([postId, c]) => [
+        postId,
+        {
+          aiCategory: c.category,
+          aiTags: JSON.stringify(c.tags),
+          aiSentiment: c.sentiment,
+          aiDescription: c.description,
+        },
+      ]);
       ({ title, description, theme } = curation);
       aiUsed = true;
     } catch (err) {
       // AI 不可用(没配 key / 超时 / 返回不合规)不该挡住成册
       console.warn("AI curation unavailable, falling back:", err);
       ({ title, description, theme } = fallbackCuration(posts));
-      for (const p of posts) updatePost(p.id, { isProcessed: true });
     }
 
     const exhibition = createExhibition({
@@ -81,6 +82,15 @@ export async function POST(request: Request) {
 
     for (const p of posts) {
       createExhibitionPost(exhibition.id, p.id);
+    }
+
+    // 回忆集与关联都建成了,才把内容标记为已装订。
+    // 任何一步在此之前失败,待装订内容都原样保留,用户可以重试。
+    for (const [postId, fields] of pendingAiUpdates) {
+      updatePost(postId, fields);
+    }
+    for (const p of posts) {
+      updatePost(p.id, { isProcessed: true });
     }
 
     return NextResponse.json({ exhibition, aiUsed }, { status: 201 });

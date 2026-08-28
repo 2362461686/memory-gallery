@@ -27,9 +27,20 @@ export default function SettingsPage() {
       .catch(() => setLoaded(true));
   }, []);
 
+  const MAX_NOTES = 60;
+  const MAX_LEN = 40;
+
   function add() {
     const text = draft.trim();
     if (!text) return;
+    if (notes.length >= MAX_NOTES) {
+      setMessage(`最多 ${MAX_NOTES} 条 —— 先删掉几条再加`);
+      return;
+    }
+    if (text.length > MAX_LEN) {
+      setMessage(`一条最多 ${MAX_LEN} 字,页脚放不下更长的`);
+      return;
+    }
     setNotes((n) => [...n, text]);
     setDraft("");
     setMessage("");
@@ -93,7 +104,7 @@ export default function SettingsPage() {
       <div className="glass-card p-6">
         <div className="flex items-center justify-between mb-4">
           <span className="manga-tag manga-tag-sky">
-            {notes.length} 条{isCustom ? " · 自定义" : " · 内置"}
+            {notes.length} / {MAX_NOTES} 条{isCustom ? " · 自定义" : " · 内置"}
           </span>
           {isCustom && (
             <button
@@ -107,16 +118,17 @@ export default function SettingsPage() {
         </div>
 
         {/* 新增 */}
-        <div className="flex gap-2 mb-5">
+        <div className="flex flex-col sm:flex-row gap-2 mb-5">
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && add()}
             placeholder="写一句你自己的,比如「这张我修了三遍」"
-            className="flex-1 px-3 py-2 bg-[var(--paper)] border-[3px] border-[var(--ink)] rounded-md text-sm font-bold placeholder:opacity-40 placeholder:font-normal focus:outline-none focus:shadow-[3px_3px_0_var(--accent)] transition-shadow"
+            maxLength={MAX_LEN}
+            className="flex-1 min-w-0 px-3 py-2.5 bg-[var(--paper)] border-[3px] border-[var(--ink)] rounded-md text-sm font-bold placeholder:opacity-40 placeholder:font-normal focus:outline-none focus:shadow-[3px_3px_0_var(--accent)] transition-shadow"
           />
-          <button onClick={add} disabled={!draft.trim()} className="manga-btn !px-4">
-            <IconPlus size={16} />
+          <button onClick={add} disabled={!draft.trim()} className="manga-btn !px-4 !py-2.5 shrink-0 justify-center">
+            <IconPlus size={16} /><span className="sm:hidden">添加</span>
           </button>
         </div>
 
@@ -135,7 +147,7 @@ export default function SettingsPage() {
                 />
                 <button
                   onClick={() => remove(i)}
-                  className="w-6 h-6 rounded border-2 border-[var(--ink)] bg-[var(--paper)] flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-[var(--accent)] hover:text-[#fffdf7] transition-all shrink-0"
+                  className="w-8 h-8 sm:w-7 sm:h-7 rounded border-2 border-[var(--ink)] bg-[var(--paper)] flex items-center justify-center opacity-60 sm:opacity-40 sm:group-hover:opacity-100 hover:bg-[var(--accent)] hover:text-[#fffdf7] active:bg-[var(--accent)] transition-all shrink-0"
                   aria-label="删掉这条"
                 >
                   <IconX size={12} />

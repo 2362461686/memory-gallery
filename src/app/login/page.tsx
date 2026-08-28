@@ -37,49 +37,49 @@ function LoginForm() {
       <div className="w-full max-w-md">
         <div className="glass-card p-8">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-1">欢迎回来</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">登录 Memory Gallery</p>
+            <h1 className="text-2xl font-black mb-1">欢迎回来</h1>
+            <p className="text-sm opacity-60 font-bold">登录 Memory Gallery</p>
           </div>
 
           {error && (
-            <div className="mb-6 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm text-center">
+            <div className="mb-6 p-3 border-[3px] border-[var(--accent)] rounded-md text-sm font-bold text-center">
               {error}
             </div>
           )}
           {registered === "1" && (
-            <div className="mb-6 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 text-sm text-center">
+            <div className="mb-6 p-3 border-[3px] border-[var(--ink)] bg-[var(--sun)] rounded-md text-sm font-bold text-center text-[#17130e]">
               注册成功，请登录
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">邮箱</label>
+              <label className="block text-sm font-black mb-1.5">邮箱</label>
               <input
                 type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-800 dark:text-slate-200 placeholder-slate-400 text-sm"
+                className="w-full px-4 py-2.5 bg-[var(--paper)] border-[3px] border-[var(--ink)] rounded-md text-sm font-bold placeholder:opacity-40 placeholder:font-normal focus:outline-none focus:shadow-[3px_3px_0_var(--accent)] transition-shadow"
                 placeholder="your@email.com"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">密码</label>
+              <label className="block text-sm font-black mb-1.5">密码</label>
               <input
                 type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-800 dark:text-slate-200 placeholder-slate-400 text-sm"
+                className="w-full px-4 py-2.5 bg-[var(--paper)] border-[3px] border-[var(--ink)] rounded-md text-sm font-bold placeholder:opacity-40 placeholder:font-normal focus:outline-none focus:shadow-[3px_3px_0_var(--accent)] transition-shadow"
                 placeholder="••••••••"
               />
             </div>
             <button
               type="submit" disabled={loading}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:from-fuchsia-600 hover:to-purple-600 text-white text-sm font-medium transition-all disabled:opacity-50 shadow-lg shadow-fuchsia-500/25"
+              className="manga-btn manga-btn-accent w-full"
             >
               {loading ? "登录中..." : "登录"}
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-6 text-center text-sm opacity-60 font-bold">
             还没有账号？{" "}
-            <Link href="/register" className="text-indigo-500 dark:text-indigo-400 font-medium hover:underline">
+            <Link href="/register" className="text-[var(--accent)] font-black hover:underline">
               注册
             </Link>
           </p>

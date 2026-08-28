@@ -9,6 +9,26 @@ import { extractFeatures } from "@/lib/image-features";
 // 扩展名白名单:防止 .html/.svg 之类落进 /uploads 变成存储型 XSS
 const ALLOWED_EXT = new Set(["jpg", "jpeg", "png", "gif", "webp", "heic", "heif"]);
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_FILES = 40;
+const MAX_TOTAL_SIZE = 120 * 1024 * 1024; // 单次上传总量
+
+/**
+ * 只看扩展名挡不住伪装文件 —— 改后缀就能把任意内容塞进 /uploads。
+ * 这里读文件头几个字节确认真实类型。
+ */
+function sniffImageType(buf: Buffer): string | null {
+  if (buf.length < 12) return null;
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "jpg";
+  if (buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "png";
+  if (buf.subarray(0, 3).toString("ascii") === "GIF") return "gif";
+  if (buf.subarray(0, 4).toString("ascii") === "RIFF" && buf.subarray(8, 12).toString("ascii") === "WEBP") return "webp";
+  // HEIC/HEIF:ISO-BMFF,ftyp 后跟 brand
+  if (buf.subarray(4, 8).toString("ascii") === "ftyp") {
+    const brand = buf.subarray(8, 12).toString("ascii");
+    if (["heic", "heix", "hevc", "heim", "heis", "mif1", "msf1"].includes(brand)) return "heic";
+  }
+  return null;
+}
 
 // 相机/截图的默认文件名对人没有意义,当图注只会变成一串乱码
 const MEANINGLESS_NAME = [
@@ -44,6 +64,16 @@ export async function POST(request: Request) {
     if (files.length === 0) {
       return NextResponse.json({ error: "没有选择文件" }, { status: 400 });
     }
+    if (files.length > MAX_FILES) {
+      return NextResponse.json({ error: `一次最多 ${MAX_FILES} 张,请分批上传` }, { status: 400 });
+    }
+    const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+    if (totalSize > MAX_TOTAL_SIZE) {
+      return NextResponse.json(
+        { error: `单次总量不能超过 ${MAX_TOTAL_SIZE / 1024 / 1024}MB(本次 ${Math.round(totalSize / 1024 / 1024)}MB)` },
+        { status: 400 }
+      );
+    }
 
     const uploadDir = path.join(process.cwd(), "public", "uploads");
     await mkdir(uploadDir, { recursive: true });
@@ -65,11 +95,17 @@ export async function POST(request: Request) {
           continue;
         }
 
-        let buffer = Buffer.from(await file.arrayBuffer());
-        let outExt = ext;
+        const original = Buffer.from(await file.arrayBuffer());
+        const sniffed = sniffImageType(original);
+        if (!sniffed) {
+          failed.push({ name: file.name, reason: "不是有效的图片文件" });
+          continue;
+        }
+        let buffer = original;
+        let outExt = sniffed === "heic" ? "heic" : sniffed;
 
         // 浏览器不认 HEIC,存原样等于裂图 —— 服务端转成 JPG
-        if (ext === "heic" || ext === "heif") {
+        if (sniffed === "heic") {
           const { default: heicConvert } = await import("heic-convert");
           buffer = Buffer.from(
             await heicConvert({ buffer, format: "JPEG", quality: 0.9 })
@@ -82,7 +118,7 @@ export async function POST(request: Request) {
         let takenAt: string | undefined;
         let location: string | undefined;
         try {
-          const exif = await exifr.parse(Buffer.from(await file.arrayBuffer()), {
+          const exif = await exifr.parse(original, {
             pick: ["DateTimeOriginal", "GPSLatitude", "GPSLongitude"],
           });
           if (exif?.DateTimeOriginal) takenAt = new Date(exif.DateTimeOriginal).toISOString();

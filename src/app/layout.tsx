@@ -4,8 +4,7 @@ import { verifyToken } from "@/lib/jwt";
 import { Noto_Serif_SC } from "next/font/google";
 import Link from "next/link";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import LogoutButton from "@/components/LogoutButton";
+import NavMenu from "@/components/NavMenu";
 import ClickEffect from "@/components/ClickEffect";
 import "./globals.css";
 
@@ -55,39 +54,15 @@ export default async function RootLayout({
         <ThemeProvider>
           <div className="flex-1 flex flex-col relative">
             {/* Navigation:漫画分格页眉 */}
-            <nav className="relative z-10 glass border-t-0 border-x-0" style={{ boxShadow: "0 4px 0 var(--ink)" }}>
-              <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+            <nav className="relative z-40 glass border-t-0 border-x-0" style={{ boxShadow: "0 4px 0 var(--ink)" }}>
+              <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
                 <Link href="/" className="flex items-center gap-2 group">
                   <span className="inline-flex items-center justify-center w-8 h-8 border-[3px] border-[var(--ink)] bg-[var(--accent)] text-[#fffdf7] font-black text-sm rounded-md shadow-[2px_2px_0_var(--ink)] group-hover:rotate-[-6deg] transition-transform">
                     忆
                   </span>
-                  <span className="text-lg font-black tracking-tight">Memory Gallery</span>
+                  <span className="text-base sm:text-lg font-black tracking-tight truncate">Memory Gallery</span>
                 </Link>
-                <div className="flex items-center gap-5 text-sm font-bold">
-                  <Link href="/" className="hover:text-[var(--accent)] transition-colors">
-                    首页
-                  </Link>
-                  {user ? (
-                    <>
-                      <Link href="/dashboard" className="hover:text-[var(--accent)] transition-colors">
-                        我的回忆
-                      </Link>
-                      <Link href="/import" className="hover:text-[var(--accent)] transition-colors">
-                        上传照片
-                      </Link>
-                      <Link href="/settings" className="hover:text-[var(--accent)] transition-colors">
-                        页边吐槽
-                      </Link>
-                      <span className="manga-tag">{user.name || user.email?.split("@")[0]}</span>
-                      <LogoutButton />
-                    </>
-                  ) : (
-                    <Link href="/login" className="manga-btn manga-btn-accent !py-1.5 !px-4 !text-xs">
-                      登录
-                    </Link>
-                  )}
-                  <ThemeToggle />
-                </div>
+                <NavMenu user={user} />
               </div>
             </nav>
 
