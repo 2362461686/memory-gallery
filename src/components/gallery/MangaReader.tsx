@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { paginate, chapterColor, type Photo, type Chapter, type PhotoPageData } from "./layout-engine";
+import { paginate, chapterColor, type Photo, type Chapter, type PhotoPageData, type TextPageData } from "./layout-engine";
 
 // 只声明阅读器真正用到的字段,与 store 的 PostRecord 结构兼容
 interface Exhibit {
@@ -32,7 +32,8 @@ function formatDay(d: Date | string | null | undefined): string {
 type Page =
   | { kind: "cover"; cover?: Photo; color?: string }
   | ({ kind: "photos" } & PhotoPageData)
-  | { kind: "back"; count: number; range: string; chapters: number };
+  | TextPageData
+  | { kind: "back"; count: number; range: string; chapters: number; notes: number };
 
 /** 按上传批次分话 —— 没有时间戳时,"一起传的"就是"一件事" */
 function buildChapters(exhibits: Exhibit[]): Chapter[] {
@@ -47,10 +48,18 @@ function buildChapters(exhibits: Exhibit[]): Chapter[] {
     // 没有 batchId 的老数据各自成组,不会和新数据混在一起
     const key = ex.batchId || `solo:${ex.id}`;
     if (!groups.has(key)) { groups.set(key, []); order.push(key); }
+    const caption = ex.contentText || ex.aiDescription || "";
+    if (urls.length === 0) {
+      // 纯文字回忆:没有图,整页留给这段话
+      if (caption) {
+        groups.get(key)!.push({ textOnly: true, caption, date: formatDay(ex.postedAt), ratio: 1, interest: 0 });
+      }
+      continue;
+    }
     for (const url of urls) {
       groups.get(key)!.push({
         url,
-        caption: ex.contentText || ex.aiDescription || "",
+        caption,
         date: formatDay(ex.postedAt),
         color: ex.dominantColor || undefined,
         ratio: ex.aspectRatio || 4 / 3,
@@ -69,17 +78,19 @@ export default function MangaReader({ exhibits, title, description }: MangaReade
   const pages = useMemo<Page[]>(() => {
     const chapters = buildChapters(exhibits);
     const all = chapters.flatMap((c) => c.photos);
-    const cover = all.length
-      ? all.reduce((best, p) => (p.interest > best.interest ? p : best), all[0])
+    const pics = all.filter((p) => !p.textOnly);
+    const cover = pics.length
+      ? pics.reduce((best, p) => (p.interest > best.interest ? p : best), pics[0])
       : undefined;
     const dates = all.map((p) => p.date).filter(Boolean);
 
     return [
       { kind: "cover", cover, color: cover?.color },
-      ...paginate(chapters).map((p) => ({ kind: "photos" as const, ...p })),
+      ...paginate(chapters).map((p) => ("kind" in p ? p : { kind: "photos" as const, ...p })),
       {
         kind: "back" as const,
-        count: all.length,
+        count: pics.length,
+        notes: all.length - pics.length,
         chapters: chapters.length,
         range: dates.length ? `${dates[dates.length - 1]} — ${dates[0]}` : "",
       },
@@ -108,7 +119,7 @@ export default function MangaReader({ exhibits, title, description }: MangaReade
   }, [turn]);
 
   const current = pages[page];
-  const tint = current.kind === "cover" || current.kind === "photos" ? current.color : undefined;
+  const tint = "color" in current ? current.color : undefined;
 
   return (
     <div className="select-none">
@@ -125,6 +136,7 @@ export default function MangaReader({ exhibits, title, description }: MangaReade
         <div key={page} className="absolute inset-0 p-4 sm:p-7 motion-safe:animate-[pageIn_0.24s_ease-out]">
           {current.kind === "cover" && <CoverPage title={title} description={description} cover={current.cover} />}
           {current.kind === "photos" && <PhotoPage page={current} />}
+          {current.kind === "text" && <TextPage page={current} />}
           {current.kind === "back" && <BackPage {...current} />}
         </div>
 
@@ -167,7 +179,7 @@ function CoverPage({ title, description, cover }: { title: string; description?:
 }
 
 function PhotoPage({ page }: { page: PhotoPageData }) {
-  const { layout, items, chapter, sfx } = page;
+  const { layout, items, chapter, sfx, focus } = page;
   return (
     <div className="h-full relative">
       <span className="absolute -top-1 right-0 z-10 text-[0.65rem] font-black opacity-35 tracking-widest">
@@ -181,14 +193,14 @@ function PhotoPage({ page }: { page: PhotoPageData }) {
           return (
             <figure key={i} className="relative min-h-0 min-w-0" style={{ gridArea: cell.area }}>
               <div
-                className="manga-photo h-full w-full"
+                className={`manga-photo manga-photo-fit h-full w-full ${focus && cell.hero ? "focus-lines" : ""}`}
                 style={{
                   transform: `rotate(${tilt})`,
-                  // 图片主色垫底:加载时不是灰块,裁切留边时也不突兀
-                  backgroundColor: item.color || undefined,
+                  // 图片主色垫底:留白处不是灰块,而是与画面同色的相纸底
+                  backgroundColor: item.color ? `color-mix(in srgb, ${item.color} 18%, var(--paper))` : undefined,
                 }}
               >
-                <img src={item.url} alt={item.caption || "回忆"} className="h-full" loading="lazy" />
+                <img src={item.url} alt={item.caption || "回忆"} loading="lazy" />
               </div>
 
               {item.date && (
@@ -205,16 +217,49 @@ function PhotoPage({ page }: { page: PhotoPageData }) {
         })}
       </div>
 
-      {sfx && <span className="manga-sfx absolute top-[38%] -right-1 text-4xl sm:text-5xl pointer-events-none">{sfx}</span>}
+      {sfx && (
+        <span className={`manga-sfx ${sfx.style} absolute top-[36%] -right-1 text-4xl sm:text-5xl pointer-events-none z-10`}>
+          {sfx.word}
+        </span>
+      )}
     </div>
   );
 }
 
-function BackPage({ count, range, chapters }: { count: number; range: string; chapters: number }) {
+function TextPage({ page }: { page: TextPageData }) {
+  const { text, chapter, variant } = page;
+  const bubble = variant === "thought" ? "thought-bubble" : variant === "shout" ? "shout-bubble" : "";
+  return (
+    <div className="h-full relative flex items-center justify-center">
+      <span className="absolute -top-1 right-0 z-10 text-[0.65rem] font-black opacity-35 tracking-widest">
+        第 {chapter} 话
+      </span>
+
+      {/* 网点底纹:纯文字页不至于空得发慌 */}
+      <div className="absolute inset-x-8 inset-y-10 tone-dots opacity-25 rounded-lg pointer-events-none" />
+
+      {variant === "narration" ? (
+        <div className="relative max-w-lg px-6">
+          <span className="manga-sfx manga-sfx-hollow absolute -top-8 -left-2 text-5xl opacity-40">“</span>
+          <p className="handwriting text-lg sm:text-xl font-bold leading-loose whitespace-pre-wrap">{text}</p>
+          <div className="h-[3px] bg-[var(--ink)] w-20 mt-5" />
+        </div>
+      ) : (
+        <div className={`relative ${bubble} max-w-md z-10`}>
+          <p className={`font-black leading-relaxed whitespace-pre-wrap ${variant === "shout" ? "text-2xl sm:text-3xl text-center" : "text-base sm:text-lg"}`}>
+            {text}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BackPage({ count, range, chapters, notes }: { count: number; range: string; chapters: number; notes: number }) {
   return (
     <div className="h-full flex flex-col items-center justify-center text-center gap-4 speed-lines rounded">
       <span className="manga-sfx text-6xl sm:text-8xl">完</span>
-      <p className="text-sm font-black">全 {chapters} 话 · 收录 {count} 张回忆</p>
+      <p className="text-sm font-black">全 {chapters} 话 · {count} 张回忆{notes > 0 ? ` · ${notes} 段手记` : ""}</p>
       {range && <p className="text-xs font-bold opacity-50">{range}</p>}
       <span className="manga-tag manga-tag-sky mt-1 rotate-[-2deg]">未完待续</span>
     </div>

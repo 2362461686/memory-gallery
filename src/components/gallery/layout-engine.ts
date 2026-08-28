@@ -9,7 +9,10 @@
  */
 
 export interface Photo {
-  url: string;
+  /** 纯文字回忆没有图 */
+  url?: string;
+  /** 纯文字页:整页只放这段话 */
+  textOnly?: boolean;
   caption: string;
   date: string;
   color?: string;
@@ -96,21 +99,57 @@ export interface PhotoPageData {
   items: Photo[];
   chapter: number;
   color?: string;
-  sfx?: string;
+  sfx?: { word: string; style: string };
+  /** 主角格加集中线,整本里稀疏出现,用于强调 */
+  focus?: boolean;
 }
 
-const SFX = ["咔嚓", "哗——", "叮", "砰!", "唰", "嗒"];
+export interface TextPageData {
+  kind: "text";
+  text: string;
+  chapter: number;
+  color?: string;
+  /** 气泡形态:独白用云朵,短句用呐喊框,其余用手写旁白 */
+  variant: "thought" | "shout" | "narration";
+}
+
+/** 拟声词库:词 + 表现风格 */
+export const SFX_POOL = [
+  { word: "咔嚓", style: "" },
+  { word: "哗——", style: "manga-sfx-soft" },
+  { word: "叮", style: "manga-sfx-soft" },
+  { word: "砰!", style: "manga-sfx-loud" },
+  { word: "唰", style: "" },
+  { word: "嗡——", style: "manga-sfx-hollow" },
+  { word: "嗒", style: "manga-sfx-soft" },
+  { word: "轰!!", style: "manga-sfx-loud" },
+  { word: "呼——", style: "manga-sfx-hollow" },
+  { word: "啪", style: "" },
+  { word: "沙沙", style: "manga-sfx-soft" },
+  { word: "咚", style: "manga-sfx-loud" },
+] as const;
 
 /**
  * 把若干"话"排成书页。
  * 每一话内部:兴趣度最高的图升为主角格,其余按原顺序跟随。
  */
-export function paginate(chapters: Chapter[]): PhotoPageData[] {
-  const pages: PhotoPageData[] = [];
+export function paginate(chapters: Chapter[]): (PhotoPageData | TextPageData)[] {
+  const pages: (PhotoPageData | TextPageData)[] = [];
   let sfxCounter = 0;
 
   for (const chapter of chapters) {
-    let rest = [...chapter.photos];
+    // 纯文字回忆各自独占一页
+    for (const note of chapter.photos.filter((p) => p.textOnly)) {
+      pages.push({
+        kind: "text",
+        text: note.caption,
+        chapter: chapter.no,
+        color: chapter.color,
+        variant: note.caption.length <= 12 ? "shout" : note.caption.length <= 60 ? "thought" : "narration",
+      });
+    }
+
+    let rest = chapter.photos.filter((p) => !p.textOnly);
     let idx = 0;
 
     while (rest.length > 0) {
@@ -131,7 +170,9 @@ export function paginate(chapters: Chapter[]): PhotoPageData[] {
         chapter: chapter.no,
         color: chapter.color,
         // 拟声词稀疏投放:满页都是就成噪音
-        sfx: sfxCounter % 4 === 1 ? SFX[sfxCounter % SFX.length] : undefined,
+        sfx: sfxCounter % 3 === 1 ? SFX_POOL[sfxCounter % SFX_POOL.length] : undefined,
+        // 集中线更稀疏,每 5 页一次强调
+        focus: sfxCounter % 5 === 3,
       });
       idx++;
       sfxCounter++;

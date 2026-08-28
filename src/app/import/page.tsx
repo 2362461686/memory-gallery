@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { IconUpload } from "@/lib/icons";
+import { IconUpload, IconMessageCircle, IconImage } from "@/lib/icons";
 
 export default function ImportPage() {
   const router = useRouter();
@@ -14,6 +14,26 @@ export default function ImportPage() {
   const [date, setDate] = useState("");
   const [place, setPlace] = useState("");
   const [note, setNote] = useState("");
+  const [tab, setTab] = useState<"photo" | "text">("photo");
+  const [noteText, setNoteText] = useState("");
+
+  async function handleNote() {
+    if (!noteText.trim()) return;
+    setLoading(true); setError(""); setMessage("");
+    try {
+      const res = await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: noteText, date, place }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error);
+      setMessage("记下了,即将跳转…");
+      setTimeout(() => router.push("/dashboard"), 1000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "保存失败");
+    } finally { setLoading(false); }
+  }
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = Array.from(e.target.files || []);
@@ -57,7 +77,7 @@ export default function ImportPage() {
       <div className="manga-heading mb-2">
         <h1 className="text-2xl font-black">收录新回忆</h1>
       </div>
-      <p className="text-sm opacity-60 mb-8 font-bold">这些天拍下的照片,传上来就是新的一话</p>
+      <p className="text-sm opacity-60 mb-6 font-bold">照片、或者只是一段话 —— 都是新的一话</p>
 
       {error && (
         <div className="mb-6 speech-bubble border-[var(--accent)] text-sm font-bold" style={{ borderColor: "var(--accent)" }}>
@@ -71,6 +91,50 @@ export default function ImportPage() {
         </div>
       )}
 
+      {/* 照片 / 手记 切换 */}
+      <div className="flex gap-2 mb-6">
+        {([["photo", IconImage, "传照片"], ["text", IconMessageCircle, "写一段"]] as const).map(([key, Icon, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 border-[3px] border-[var(--ink)] rounded-lg font-black text-sm transition-all ${
+              tab === key
+                ? "bg-[var(--ink)] text-[var(--paper)] shadow-[4px_4px_0_var(--accent)]"
+                : "bg-[var(--paper)] shadow-[3px_3px_0_var(--ink)] hover:-translate-y-0.5"
+            }`}
+          >
+            <Icon size={16} />{label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "text" ? (
+        <div className="glass-card p-6">
+          <p className="text-sm font-black mb-1">没有照片的那天,也值得记一页</p>
+          <p className="text-xs opacity-55 font-bold mb-4">短句会做成呐喊框,中等长度做成思考气泡,长段落做成手写旁白页。</p>
+          <textarea
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value)}
+            rows={6}
+            maxLength={500}
+            placeholder="例:今天什么都没发生,但下班路上的晚霞很好看。"
+            className="w-full px-4 py-3 bg-[var(--paper)] border-[3px] border-[var(--ink)] rounded-lg text-sm font-bold leading-relaxed resize-none placeholder:opacity-40 placeholder:font-normal focus:outline-none focus:shadow-[3px_3px_0_var(--accent)] transition-shadow"
+          />
+          <div className="flex justify-between items-center mt-2">
+            <span className="text-xs opacity-45 font-bold tabular-nums">{noteText.length} / 500</span>
+            <span className="text-xs opacity-45 font-bold">
+              {noteText.length <= 12 ? "→ 呐喊框" : noteText.length <= 60 ? "→ 思考气泡" : "→ 手写旁白"}
+            </span>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3 mt-4">
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="px-3 py-2 bg-[var(--paper)] border-[3px] border-[var(--ink)] rounded-md text-sm font-bold focus:outline-none focus:shadow-[3px_3px_0_var(--accent)] transition-shadow" />
+            <input type="text" value={place} onChange={(e) => setPlace(e.target.value)} placeholder="在哪(可选)" className="px-3 py-2 bg-[var(--paper)] border-[3px] border-[var(--ink)] rounded-md text-sm font-bold placeholder:opacity-40 placeholder:font-normal focus:outline-none focus:shadow-[3px_3px_0_var(--accent)] transition-shadow" />
+          </div>
+          <button onClick={handleNote} disabled={loading || !noteText.trim()} className="manga-btn manga-btn-accent w-full mt-5">
+            {loading ? "记录中…" : "记下这一页"}
+          </button>
+        </div>
+      ) : (
       <div className="glass-card p-6">
         <div
           className="border-[3px] border-dashed border-[var(--ink)] rounded-xl p-10 text-center cursor-pointer hover:bg-[color-mix(in_srgb,var(--sun)_18%,transparent)] transition-colors"
@@ -154,6 +218,7 @@ export default function ImportPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

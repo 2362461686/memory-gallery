@@ -186,6 +186,21 @@
 .manga-photo:hover { transform: rotate(1deg) scale(1.03); }
 .manga-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
+/* 阅读器里的照片:整幅完整呈现,绝不裁切 —— 相纸随图片比例走 */
+.manga-photo-fit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.manga-photo-fit img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 /* ---------- 拟声词 ---------- */
 
 .manga-sfx {
@@ -197,6 +212,76 @@
   transform: rotate(-6deg);
   letter-spacing: 0.05em;
   user-select: none;
+}
+
+/* 拟声词变体:黄底描边(重音)、青底(轻音)、空心(回响) */
+.manga-sfx-loud { color: var(--sun); text-shadow: 3px 3px 0 var(--ink), -1px -1px 0 var(--ink); transform: rotate(-9deg) scale(1.15); }
+.manga-sfx-soft { color: var(--sky); text-shadow: 2px 2px 0 var(--ink); transform: rotate(4deg) scale(0.9); }
+.manga-sfx-hollow { color: transparent; -webkit-text-stroke: 2px var(--ink); text-shadow: none; }
+
+/* ---------- 集中线(强调格) ---------- */
+
+.focus-lines::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    color-mix(in srgb, var(--ink) 22%, transparent) 0deg 1.1deg,
+    transparent 1.1deg 5deg
+  );
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent 32%, #000 78%);
+  mask-image: radial-gradient(circle at 50% 50%, transparent 32%, #000 78%);
+  border-radius: inherit;
+}
+
+/* ---------- 网点阴影块(平涂补色) ---------- */
+
+.tone-dots {
+  background-image: radial-gradient(color-mix(in srgb, var(--ink) 42%, transparent) 1.4px, transparent 1.5px);
+  background-size: 6px 6px;
+}
+
+/* ---------- 思考气泡(云朵) ---------- */
+
+.thought-bubble {
+  position: relative;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  border-radius: 44% 56% 52% 48% / 52% 48% 55% 45%;
+  padding: 1.1rem 1.4rem;
+}
+.thought-bubble::before,
+.thought-bubble::after {
+  content: "";
+  position: absolute;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+}
+.thought-bubble::before { width: 14px; height: 14px; bottom: -18px; left: 30px; }
+.thought-bubble::after { width: 8px; height: 8px; bottom: -30px; left: 20px; }
+
+/* ---------- 呐喊气泡(爆炸框) ---------- */
+
+.shout-bubble {
+  position: relative;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  padding: 1rem 1.3rem;
+  clip-path: polygon(
+    0% 12%, 6% 6%, 14% 10%, 24% 2%, 36% 8%, 48% 0%, 60% 7%, 72% 2%, 84% 9%, 94% 4%, 100% 14%,
+    96% 26%, 100% 38%, 95% 52%, 100% 66%, 94% 78%, 100% 90%, 90% 96%, 78% 92%, 66% 100%,
+    54% 93%, 42% 100%, 30% 94%, 18% 99%, 8% 92%, 0% 86%, 4% 72%, 0% 58%, 5% 44%, 0% 28%
+  );
+}
+
+/* ---------- 手写体标题(卷首/旁白) ---------- */
+
+.handwriting {
+  font-family: 'Xingkai SC', 'STXingkai', 'Kaiti SC', 'KaiTi', var(--font-serif);
+  letter-spacing: 0.03em;
 }
 
 @media (prefers-reduced-motion: no-preference) {
