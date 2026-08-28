@@ -222,6 +222,78 @@
   object-fit: contain;
 }
 
+/* ---------- 书:回忆集在书架上的样子 ---------- */
+
+/* 书脊:左缘一道深色带,让卡片看起来是一本立着的书而不是一张卡 */
+.volume {
+  position: relative;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  border-radius: 3px 12px 12px 3px;
+  box-shadow: 5px 5px 0 var(--ink);
+  overflow: hidden;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+.volume::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 14px;
+  background: var(--ink);
+  z-index: 2;
+}
+/* 书脊内侧的压痕线 */
+.volume::after {
+  content: "";
+  position: absolute;
+  left: 18px; top: 0; bottom: 0;
+  width: 2px;
+  background: color-mix(in srgb, var(--ink) 18%, transparent);
+  z-index: 2;
+}
+.volume:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 9px 9px 0 var(--ink);
+}
+
+/* 卷号:压在书脊上的白字 */
+.volume-no {
+  position: absolute;
+  left: -1px; top: 10px;
+  z-index: 3;
+  width: 16px;
+  color: var(--paper);
+  font-size: 0.6rem;
+  font-weight: 900;
+  text-align: center;
+  writing-mode: vertical-rl;
+  letter-spacing: 0.08em;
+}
+
+/* ---------- 连载目录行 ---------- */
+
+.toc-row {
+  display: block;
+  border-bottom: 3px solid var(--ink);
+  padding: 0.9rem 0;
+  transition: background-color 0.14s ease, padding-left 0.14s ease;
+}
+.toc-row:hover {
+  background: color-mix(in srgb, var(--sun) 20%, transparent);
+  padding-left: 0.5rem;
+}
+
+/* ---------- 刊头:主界面的场面 ---------- */
+
+.masthead {
+  position: relative;
+  border: 3px solid var(--ink);
+  border-radius: 4px;
+  background: var(--paper);
+  box-shadow: 6px 6px 0 var(--ink);
+  overflow: hidden;
+}
+
 /* ---------- 拟声词 ---------- */
 
 .manga-sfx {
