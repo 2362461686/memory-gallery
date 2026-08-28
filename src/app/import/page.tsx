@@ -11,6 +11,9 @@ export default function ImportPage() {
   const [error, setError] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [date, setDate] = useState("");
+  const [place, setPlace] = useState("");
+  const [note, setNote] = useState("");
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = Array.from(e.target.files || []);
@@ -30,6 +33,9 @@ export default function ImportPage() {
     setLoading(true); setError(""); setMessage("");
     const fd = new FormData();
     files.forEach((f) => fd.append("files", f));
+    if (date) fd.append("date", date);
+    if (place) fd.append("place", place);
+    if (note) fd.append("note", note);
     try {
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       const d = await res.json();
@@ -98,6 +104,50 @@ export default function ImportPage() {
                 </div>
               ))}
             </div>
+            {/* 可选:想给这批照片留句话就展开,不填照样成册 */}
+            <details className="mt-6 pt-6 border-t-[3px] border-dashed border-[var(--ink)] group">
+              <summary className="text-sm font-black cursor-pointer list-none flex items-center gap-2 select-none">
+                <span className="inline-flex items-center justify-center w-5 h-5 border-2 border-[var(--ink)] rounded text-xs group-open:rotate-45 transition-transform">
+                  +
+                </span>
+                想给这批照片留句话?<span className="opacity-50 font-bold">(可选)</span>
+              </summary>
+              <p className="text-xs opacity-55 font-bold mt-2 mb-4">
+                不填也没关系——照片自带拍摄信息会自动读取,读不到就按收录顺序排进连载。
+              </p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="text-xs font-bold opacity-70">日期</span>
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="mt-1 w-full px-3 py-2 bg-[var(--paper)] border-[3px] border-[var(--ink)] rounded-md text-sm font-bold focus:outline-none focus:shadow-[3px_3px_0_var(--accent)] transition-shadow"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs font-bold opacity-70">在哪</span>
+                  <input
+                    type="text"
+                    value={place}
+                    onChange={(e) => setPlace(e.target.value)}
+                    placeholder="例:青岛 · 栈桥"
+                    className="mt-1 w-full px-3 py-2 bg-[var(--paper)] border-[3px] border-[var(--ink)] rounded-md text-sm font-bold placeholder:opacity-40 placeholder:font-normal focus:outline-none focus:shadow-[3px_3px_0_var(--accent)] transition-shadow"
+                  />
+                </label>
+              </div>
+              <label className="block mt-3">
+                <span className="text-xs font-bold opacity-70">一句话</span>
+                <input
+                  type="text"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="例:下午翘班去看海,风很大"
+                  className="mt-1 w-full px-3 py-2 bg-[var(--paper)] border-[3px] border-[var(--ink)] rounded-md text-sm font-bold placeholder:opacity-40 placeholder:font-normal focus:outline-none focus:shadow-[3px_3px_0_var(--accent)] transition-shadow"
+                />
+              </label>
+            </details>
+
             <button onClick={handleUpload} disabled={loading} className="manga-btn manga-btn-accent w-full mt-6">
               {loading ? "收录中…" : `收录这 ${files.length} 张回忆`}
             </button>

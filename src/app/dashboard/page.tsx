@@ -3,25 +3,26 @@ import { redirect } from "next/navigation";
 import { findExhibitionsByUser, getExhibitionPostCounts, findUserById, findPostsByUser } from "@/lib/store";
 import Link from "next/link";
 import { IconPlus, IconGallery, IconMapPin, IconCalendar } from "@/lib/icons";
+import BindButton from "@/components/BindButton";
 
-// 按"日子"分组:回忆录的分镜单位是一天
-function groupPostsByDay(posts: ReturnType<typeof findPostsByUser>) {
-  const days = new Map<string, { photos: string[]; texts: string[]; location?: string }>();
+// 分组:优先按上传批次(一起传的就是一件事),老数据无批次时退回按天
+function groupPosts(posts: ReturnType<typeof findPostsByUser>) {
+  const groups = new Map<string, { label: string; photos: string[]; texts: string[]; location?: string; color?: string }>();
   for (const post of posts) {
     const day = new Date(post.postedAt || post.createdAt).toLocaleDateString("zh-CN", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+      year: "numeric", month: "long", day: "numeric",
     });
-    if (!days.has(day)) days.set(day, { photos: [], texts: [] });
-    const entry = days.get(day)!;
+    const key = post.batchId || `day:${day}`;
+    if (!groups.has(key)) groups.set(key, { label: day, photos: [], texts: [] });
+    const entry = groups.get(key)!;
     try {
       entry.photos.push(...(JSON.parse(post.mediaUrls) as string[]));
     } catch { /* 老数据里可能有非法 JSON,跳过 */ }
     if (post.contentText) entry.texts.push(post.contentText);
     if (post.location && !entry.location) entry.location = post.location;
+    if (post.dominantColor && !entry.color) entry.color = post.dominantColor;
   }
-  return [...days.entries()];
+  return [...groups.values()];
 }
 
 export default async function DashboardPage() {
@@ -32,7 +33,8 @@ export default async function DashboardPage() {
   const exhibitions = findExhibitionsByUser(session.id);
   const counts = getExhibitionPostCounts(exhibitions.map((e) => e.id));
   const posts = findPostsByUser(session.id);
-  const timeline = groupPostsByDay(posts);
+  const unbound = findPostsByUser(session.id, { isProcessed: false });
+  const timeline = groupPosts(posts);
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
@@ -40,11 +42,14 @@ export default async function DashboardPage() {
       <div className="flex items-center justify-between mb-10">
         <div>
           <h1 className="text-2xl font-black">{userName} 的回忆录</h1>
-          <p className="text-sm opacity-60 mt-1 font-bold">已连载 {timeline.length} 天 · {posts.length} 张回忆</p>
+          <p className="text-sm opacity-60 mt-1 font-bold">已连载 {timeline.length} 话 · {posts.length} 张回忆</p>
         </div>
-        <Link href="/import" className="manga-btn manga-btn-accent">
-          <IconPlus size={16} />收录新回忆
-        </Link>
+        <div className="flex gap-3">
+          {unbound.length > 0 && <BindButton postCount={unbound.length} />}
+          <Link href="/import" className="manga-btn manga-btn-ghost">
+            <IconPlus size={16} />收录新回忆
+          </Link>
+        </div>
       </div>
 
       {posts.length === 0 && exhibitions.length === 0 ? (
@@ -97,16 +102,16 @@ export default async function DashboardPage() {
             <section>
               <div className="manga-heading mb-5">
                 <h2 className="text-lg font-black">时间线</h2>
-                <span className="manga-tag manga-tag-sky">{timeline.length} 天</span>
+                <span className="manga-tag manga-tag-sky">{timeline.length} 话</span>
               </div>
               <div className="relative pl-6 border-l-[3px] border-[var(--ink)] space-y-8">
-                {timeline.map(([day, entry], i) => (
-                  <article key={day} className="relative">
+                {timeline.map((entry, i) => (
+                  <article key={i} className="relative">
                     {/* 时间轴节点 */}
-                    <span className="absolute -left-[33px] top-1.5 w-4 h-4 rounded-full bg-[var(--accent)] border-[3px] border-[var(--ink)]" />
+                    <span className="absolute -left-[33px] top-1.5 w-4 h-4 rounded-full border-[3px] border-[var(--ink)]" style={{ background: entry.color || "var(--accent)" }} />
                     <div className={`glass-card p-5 ${i % 2 === 1 ? "rotate-[0.3deg]" : "rotate-[-0.3deg]"}`}>
                       <header className="flex flex-wrap items-center gap-3 mb-3">
-                        <span className="manga-tag manga-tag-accent"><IconCalendar size={12} />{day}</span>
+                        <span className="manga-tag manga-tag-sky"><IconCalendar size={12} />第 {timeline.length - i} 话 · {entry.label}</span>
                         {entry.location && (
                           <span className="manga-tag manga-tag-sky"><IconMapPin size={12} />{entry.location}</span>
                         )}

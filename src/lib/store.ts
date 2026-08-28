@@ -30,6 +30,14 @@ interface PostRecord {
   originalUrl?: string;
   postedAt?: string;
   location?: string;
+  /** 同一次上传的照片共享此 id —— 没有时间戳时,"一起传的"就是"一件事" */
+  batchId?: string;
+  /** 图片主色 hex,驱动该话的色调 */
+  dominantColor?: string;
+  /** 宽高比 w/h,用于按比例排版,避免竖图被裁 */
+  aspectRatio?: number;
+  /** 视觉兴趣度 0-1,用于挑主角格 */
+  interest?: number;
   aiCategory?: string;
   aiTags?: string;
   aiSentiment?: string;
