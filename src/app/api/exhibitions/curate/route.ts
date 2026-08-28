@@ -42,10 +42,29 @@ export async function POST(request: Request) {
   }
 
   try {
-    const posts = findPostsByUser(session.id, { isProcessed: false, limit: 100 });
+    // 预览页会带上用户的选择;直接调用(无 body)则沿用旧行为:全部待收内容
+    let body: {
+      postIds?: string[];
+      title?: string;
+      description?: string;
+      coverPostId?: string;
+      useAi?: boolean;
+    } = {};
+    try {
+      body = await request.json();
+    } catch { /* 没有 body,按旧行为走 */ }
+
+    const pending = findPostsByUser(session.id, { isProcessed: false, limit: 200 });
+
+    // 用户选了哪些就装哪些,并保持他排的顺序
+    const posts = body.postIds?.length
+      ? body.postIds
+          .map((id) => pending.find((p) => p.id === id))
+          .filter((p): p is NonNullable<typeof p> => Boolean(p))
+      : pending;
 
     if (posts.length === 0) {
-      return NextResponse.json({ error: "没有新的回忆可以装订" }, { status: 400 });
+      return NextResponse.json({ error: "没有选中任何回忆" }, { status: 400 });
     }
 
     let title: string;
@@ -55,7 +74,10 @@ export async function POST(request: Request) {
     let pendingAiUpdates: [string, Record<string, string>][] = [];
     let fallbackReason: string | null = null;
 
+    const wantAi = body.useAi !== false && !body.title?.trim();
+
     try {
+      if (!wantAi) throw new Error("skip-ai");
       const curation = await curatePosts(posts);
       // 只暂存,先不落库 —— 回忆集建成之前不许把内容标记为已消费
       pendingAiUpdates = Object.entries(curation.postCategories).map(([postId, c]) => [
@@ -72,12 +94,16 @@ export async function POST(request: Request) {
     } catch (err) {
       // AI 不可用(没配 key / 401 / 超时 / 返回不合规)不该挡住成册,
       // 但必须让用户知道这本是自动起名的,而不是悄悄降级
-      console.warn("AI curation unavailable, falling back:", err);
-      fallbackReason = !process.env.DEEPSEEK_API_KEY
+      if (!wantAi) {
+        ({ title, description, theme } = fallbackCuration(posts, 1));
+      } else {
+        console.warn("AI curation unavailable, falling back:", err);
+        fallbackReason = !process.env.DEEPSEEK_API_KEY
         ? "没有配置 AI 密钥"
         : err instanceof Error && /401|Authentication/i.test(err.message)
           ? "AI 密钥无效"
           : "AI 暂时不可用";
+      }
       // 同一天已有几本,决定卷号,避免重名
       const sameDayCount = findExhibitionsByUser(session.id).filter((e) =>
         e.title.startsWith(new Date(posts[0].postedAt || posts[0].createdAt).toLocaleDateString("zh-CN", { month: "long", day: "numeric" }))
@@ -85,14 +111,21 @@ export async function POST(request: Request) {
       ({ title, description, theme } = fallbackCuration(posts, sameDayCount + 1));
     }
 
+    // 用户在预览页写了什么就用什么 —— 他的话优先于 AI 和自动起名
+    const finalTitle = body.title?.trim() || title;
+    const finalDescription = body.description?.trim() || description;
+    const coverPost = body.coverPostId
+      ? posts.find((p) => p.id === body.coverPostId)
+      : posts[0];
+
     const exhibition = createExhibition({
       userId: session.id,
-      title,
+      title: finalTitle,
       theme,
-      description,
+      description: finalDescription,
       coverImage: (() => {
         try {
-          return (JSON.parse(posts[0].mediaUrls) as string[])[0];
+          return (JSON.parse((coverPost ?? posts[0]).mediaUrls) as string[])[0];
         } catch {
           return undefined;
         }
