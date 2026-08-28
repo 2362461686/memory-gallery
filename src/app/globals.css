@@ -525,6 +525,66 @@
   }
 }
 
+/* ============================================================
+   SIGNATURE:自己装订起来的漫画页
+   打开首页,平凡瞬间一格一格砸到纸上,最后一格是标题。
+   这是整个产品的论点:你的普通日子,变成这个。
+   页面载入序列 —— 只演一次,不循环。
+   ============================================================ */
+
+.assemble > * {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .assemble > * {
+    opacity: 0;
+    animation: panelDrop 0.52s cubic-bezier(0.22, 1.4, 0.36, 1) forwards;
+  }
+  /* 逐格落下,节奏不均 —— 均匀的间隔像机器,不像画的 */
+  .assemble > *:nth-child(1) { animation-delay: 0.10s; }
+  .assemble > *:nth-child(2) { animation-delay: 0.26s; }
+  .assemble > *:nth-child(3) { animation-delay: 0.37s; }
+  .assemble > *:nth-child(4) { animation-delay: 0.58s; }
+  .assemble > *:nth-child(5) { animation-delay: 0.69s; }
+  .assemble > *:nth-child(6) { animation-delay: 0.92s; }
+
+  @keyframes panelDrop {
+    from {
+      opacity: 0;
+      transform: translateY(-26px) scale(1.06) rotate(var(--drop-tilt, -1.5deg));
+    }
+    70% { opacity: 1; }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1) rotate(0deg);
+    }
+  }
+
+  /* 拟声词跟着自己那一格落地时响 */
+  .sfx-land {
+    opacity: 0;
+    animation: sfxLand 0.44s cubic-bezier(0.34, 1.7, 0.64, 1) forwards;
+  }
+  @keyframes sfxLand {
+    from { opacity: 0; transform: rotate(-6deg) scale(0.2); }
+    60%  { opacity: 1; transform: rotate(-8deg) scale(1.22); }
+    to   { opacity: 1; transform: rotate(-6deg) scale(1); }
+  }
+
+  /* 落地那一下的震 —— 整页轻微一顿 */
+  .assemble-quake {
+    animation: assembleQuake 1.5s ease-out 0.92s;
+  }
+  @keyframes assembleQuake {
+    0%, 100% { transform: translate(0, 0); }
+    4%       { transform: translate(-3px, 2px); }
+    8%       { transform: translate(3px, -2px); }
+    12%      { transform: translate(-2px, 1px); }
+    16%      { transform: translate(0, 0); }
+  }
+}
+
 /* ---------- 翻页 ---------- */
 
 @keyframes pageIn {

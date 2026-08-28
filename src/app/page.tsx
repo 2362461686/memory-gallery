@@ -1,125 +1,146 @@
 import Link from "next/link";
-import { IconUpload, IconSparkles, IconGallery } from "@/lib/icons";
 
-const chapters = [
-  {
-    Icon: IconUpload,
-    no: "第一话",
-    title: "把照片传上来",
-    desc: "这些天去了哪里、吃了什么、见了谁。拍摄时间和地点自动读取，截图也收 —— 它也是回忆的一种。",
-    sfx: "咔嚓",
-    sfxStyle: "fx-sfx-shake",
-  },
-  {
-    Icon: IconSparkles,
-    no: "第二话",
-    title: "自动排成分镜",
-    desc: "格子的比例跟着照片走，竖图不会被裁。一起传的算一话，大小有起伏，像真的漫画页。",
-    sfx: "唰",
-    sfxStyle: "manga-sfx-soft fx-sfx-shake",
-  },
-  {
-    Icon: IconGallery,
-    no: "第三话",
-    title: "装订成一卷",
-    desc: "挑内容、排顺序、选封面、起名字，确认后装订。发给谁看，随时能撤回。",
-    sfx: "砰!",
-    sfxStyle: "manga-sfx-loud fx-sfx-bounce",
-  },
+/**
+ * 首页的记忆点(signature):一页会自己装订起来的漫画。
+ *
+ * 打开就看着几个平凡瞬间一格一格砸到纸上,拟声词跟着响,
+ * 最后落下来的那一格是标题。这就是产品的论点本身 ——
+ * 你的普通日子,变成这个。
+ *
+ * 大胆只花在这一处;页面其余部分一律安静。
+ */
+
+// 刻意选最没什么故事的瞬间 —— 平凡才是论点
+const panels = [
+  { caption: "周二的天", sfx: "唰", sfxClass: "manga-sfx-soft", tone: "sky", tilt: "-1.6deg" },
+  { caption: "加班那碗面", sfx: "", sfxClass: "", tone: "sun", tilt: "1.4deg" },
+  { caption: "回家路上", sfx: "咔嚓", sfxClass: "", tone: "dots", tilt: "-1.1deg" },
+  { caption: "猫又睡了", sfx: "", sfxClass: "", tone: "sun", tilt: "1.8deg" },
+  { caption: "没发出去的那条消息", sfx: "叮", sfxClass: "manga-sfx-soft", tone: "sky", tilt: "-1.3deg" },
+];
+
+const toneClass: Record<string, string> = {
+  sky: "bg-[color-mix(in_srgb,var(--sky)_38%,var(--paper))]",
+  sun: "bg-[color-mix(in_srgb,var(--sun)_34%,var(--paper))]",
+  dots: "tone-dots",
+};
+
+const areas = [
+  "1 / 1 / 2 / 3",
+  "1 / 3 / 3 / 4",
+  "2 / 1 / 3 / 2",
+  "2 / 2 / 3 / 3",
+  "3 / 3 / 4 / 4",
 ];
 
 export default function Home() {
   return (
     <div className="px-4 sm:px-6">
-      {/* ── 刊头:整屏,标题砸在纸上 ── */}
-      <section className="min-h-[calc(100vh-140px)] flex items-center justify-center py-12">
-        <div className="masthead speed-lines fx-speed fx-shock w-full max-w-3xl relative overflow-hidden">
-          <span className="absolute top-4 left-4 manga-tag manga-tag-accent rotate-[-4deg] z-10">连载中</span>
-          <span className="absolute top-4 right-4 manga-tag rotate-[3deg] z-10">全彩</span>
+      {/* ════ SIGNATURE:自己装订起来的一页 ════ */}
+      <section className="min-h-[calc(100vh-140px)] flex items-center justify-center py-10">
+        <div className="assemble-quake w-full max-w-3xl">
+          <div className="masthead p-3 sm:p-5" style={{ aspectRatio: "4 / 3.1" }}>
+            <div
+              className="assemble h-full grid gap-2 sm:gap-3"
+              style={{
+                gridTemplateColumns: "1.25fr 1fr 1fr",
+                gridTemplateRows: "1.15fr 1fr 1.5fr",
+              }}
+            >
+              {panels.map((p, i) => (
+                <figure
+                  key={p.caption}
+                  className={`manga-panel relative ${toneClass[p.tone]}`}
+                  style={
+                    { "--drop-tilt": p.tilt, gridArea: areas[i] } as React.CSSProperties
+                  }
+                >
+                  {/* 旁白框:交代这是哪个瞬间 */}
+                  <figcaption className="absolute top-0 left-0 bg-[var(--paper)] border-r-[3px] border-b-[3px] border-[var(--ink)] px-2 py-[3px] text-[0.6rem] sm:text-[0.7rem] font-black max-w-[88%] truncate">
+                    {p.caption}
+                  </figcaption>
 
-          <div className="px-6 sm:px-10 py-16 sm:py-24 text-center relative z-10">
-            <h1 className="title-impact fx-title-quake text-5xl sm:text-7xl font-black tracking-tight leading-[0.95] mb-6 relative z-10">
-              把日子
-              <br />
-              <span className="text-[var(--accent)]">画成回忆集</span>
-            </h1>
+                  {p.sfx && (
+                    <span
+                      className={`sfx-land manga-sfx ${p.sfxClass} absolute bottom-2 right-2 text-xl sm:text-3xl pointer-events-none`}
+                      style={{ animationDelay: `${0.34 + i * 0.14}s` }}
+                    >
+                      {p.sfx}
+                    </span>
+                  )}
+                </figure>
+              ))}
 
-            <div className="h-[3px] w-20 bg-[var(--ink)] mx-auto mb-6" />
-
-            <p className="handwriting text-lg sm:text-xl font-bold opacity-80 mb-10">
-              上传照片 · 自动排成分镜 · 装订成册
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/register" className="manga-btn manga-btn-accent text-base !px-8">
-                开始我的第一话 →
-              </Link>
-              <Link href="/login" className="manga-btn manga-btn-ghost text-base !px-8">
-                已有账号？登录
-              </Link>
+              {/* 最后落下的一格:标题 —— 论点在这里落地 */}
+              <div
+                className="manga-panel relative flex flex-col items-center justify-center text-center px-4 py-6"
+                style={{ "--drop-tilt": "1.2deg", gridArea: "3 / 1 / 4 / 3" } as React.CSSProperties}
+              >
+                <h1 className="text-2xl sm:text-4xl font-black leading-[1.08] mb-3">
+                  把这些日子
+                  <br />
+                  <span className="text-[var(--accent)]">画成一本</span>
+                </h1>
+                <Link href="/register" className="manga-btn manga-btn-accent !py-2 !px-6 text-sm">
+                  开始我的第一话 →
+                </Link>
+              </div>
             </div>
           </div>
 
-          <span className="sfx-in fx-sfx-shake manga-sfx absolute bottom-5 left-6 text-4xl sm:text-5xl pointer-events-none z-10">
-            咔嚓
-          </span>
-        </div>
-      </section>
-
-      {/* ── 气泡:一句话说清它凭什么 ── */}
-      <section className="max-w-2xl mx-auto pb-24">
-        <div className="panel-in speech-bubble">
-          <p className="text-sm sm:text-base leading-relaxed font-bold">
-            「前几天去的海边、上周那顿火锅、去年生日的蛋糕……
-            照片躺在相册里就只是文件。<b>放进来，它们就是你的连载。</b>」
-          </p>
-        </div>
-      </section>
-
-      {/* ── 三话:逐格落到纸上,从右侧入场契合漫画动线 ── */}
-      <section className="max-w-4xl mx-auto pb-24">
-        <div className="manga-heading mb-8">
-          <h2 className="text-xl font-black">怎么画</h2>
-        </div>
-
-        <div className="flex flex-col gap-6">
-          {chapters.map(({ Icon, no, title, desc, sfx, sfxStyle }, i) => (
-            <article
-              key={no}
-              className={`panel-in-r glass-card relative overflow-hidden ${
-                i === 1 ? "sm:ml-12" : i === 2 ? "sm:ml-24" : ""
-              }`}
+          {/* 欄外:书的页边,不是网页的说明文字 */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-4 px-1">
+            <p className="handwriting text-sm sm:text-base font-bold opacity-70">
+              上面这五格，都是很普通的一天。
+            </p>
+            <Link
+              href="/login"
+              className="text-sm font-bold opacity-60 hover:opacity-100 hover:text-[var(--accent)] transition-all underline underline-offset-4"
             >
-              <div className="flex items-start gap-5 p-6 sm:p-7">
-                <div className="shrink-0 w-14 h-14 rounded-md border-[3px] border-[var(--ink)] bg-[var(--sun)] flex items-center justify-center shadow-[3px_3px_0_var(--ink)]">
-                  <Icon className="text-[var(--on-bright)]" size={24} />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <span className="manga-tag manga-tag-sky mb-2 inline-block">{no}</span>
-                  <h3 className="text-xl sm:text-2xl font-black mb-2">{title}</h3>
-                  <p className="text-sm opacity-70 leading-relaxed font-bold">{desc}</p>
-                </div>
-              </div>
-
-              <span
-                className={`sfx-in manga-sfx ${sfxStyle} absolute -bottom-1 right-4 text-3xl sm:text-4xl pointer-events-none opacity-90`}
-              >
-                {sfx}
-              </span>
-            </article>
-          ))}
+              已有账号？登录
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* ── 收尾:下回预告 ── */}
-      <section className="max-w-2xl mx-auto pb-24">
-        <div className="panel-in masthead speed-lines fx-speed text-center px-6 py-14">
-          <span className="manga-sfx fx-sfx-bounce text-5xl sm:text-6xl inline-block mb-5">未完</span>
-          <p className="handwriting text-lg font-bold opacity-80 mb-2">
-            下一话：还没发生的那些日子
+      {/* ════ 以下全部保持安静 ════ */}
+
+      <section className="max-w-2xl mx-auto pb-28">
+        <div className="panel-in">
+          <p className="text-lg sm:text-xl font-bold leading-[1.9]">
+            照片躺在相册里，就只是文件。
+            <br />
+            <span className="text-[var(--accent)]">排进格子里，它们才是你的连载。</span>
           </p>
-          <p className="text-xs font-bold opacity-50 mb-8">等你回来继续画</p>
+          <div className="h-[3px] w-16 bg-[var(--ink)] mt-6" />
+        </div>
+      </section>
+
+      <section className="max-w-3xl mx-auto pb-28">
+        <ol className="border-t-[3px] border-[var(--ink)]">
+          {[
+            ["传照片", "拍摄时间和地点自动读取。截图也收 —— 它也是回忆的一种。"],
+            ["排成分镜", "格子比例跟着照片走，竖图不会被裁。一起传的算一话。"],
+            ["装订成卷", "挑内容、排顺序、选封面、起名字。发给谁看，随时能撤回。"],
+          ].map(([title, desc], i) => (
+            <li key={title} className="panel-in toc-row flex items-baseline gap-5">
+              <span className="shrink-0 text-2xl sm:text-3xl font-black tabular-nums opacity-25">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <div className="min-w-0">
+                <h2 className="text-lg sm:text-xl font-black mb-1">{title}</h2>
+                <p className="text-sm opacity-65 leading-relaxed font-bold">{desc}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="max-w-2xl mx-auto pb-28 text-center">
+        <div className="panel-in">
+          <p className="handwriting text-xl sm:text-2xl font-bold opacity-80 mb-8 leading-relaxed">
+            下一话，是你还没过完的那些日子。
+          </p>
           <Link href="/register" className="manga-btn manga-btn-accent text-base !px-8">
             开始连载 →
           </Link>
