@@ -1,4 +1,6 @@
-import { findExhibitionByShareToken, findExhibitionPosts, getMarginNotes } from "@/lib/store";
+import { findExhibitionByShareToken, findExhibitionPosts, getMarginNotes, checkShareAccess } from "@/lib/store";
+import { cookies } from "next/headers";
+import SharePasswordGate from "./SharePasswordGate";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -23,10 +25,39 @@ export async function generateMetadata({ params }: SharePageProps): Promise<Meta
   };
 }
 
+function ShareClosed({ reason }: { reason: "revoked" | "expired" }) {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center px-6">
+      <div className="glass-card p-10 text-center max-w-sm">
+        <span className="manga-sfx text-5xl block mb-4">
+          {reason === "expired" ? "过期" : "已收"}
+        </span>
+        <p className="font-black mb-2">
+          {reason === "expired" ? "这个链接已经过期了" : "分享者关闭了这个链接"}
+        </p>
+        <p className="text-sm opacity-60 font-bold">
+          想再看的话,请他重新发一个给你。
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default async function SharePage({ params }: SharePageProps) {
   const { token } = await params;
   const exhibition = findExhibitionByShareToken(token);
   if (!exhibition) notFound();
+
+  // 分享是受控的:关闭、过期、需要密码,都在这里拦住
+  const gate = checkShareAccess(exhibition);
+  if (!gate.ok) {
+    if (gate.reason === "password") {
+      const unlocked = (await cookies()).get(`share_${token}`)?.value === "1";
+      if (!unlocked) return <SharePasswordGate token={token} title={exhibition.title} />;
+    } else {
+      return <ShareClosed reason={gate.reason} />;
+    }
+  }
 
   const exhibits = findExhibitionPosts(exhibition.id)
     .map((ep) => ep.post)

@@ -131,7 +131,9 @@ export async function POST(request: Request) {
         }
       })(),
       shareToken: crypto.randomUUID(),
-      isPublic: false,
+      // 默认开启:分享按钮里可以随时撤销、设密码、设有效期。
+      // 之前写 false 但 token 照样能访问,字段是摆设 —— 现在它真的说了算。
+      isPublic: true,
     });
 
     for (const p of posts) {

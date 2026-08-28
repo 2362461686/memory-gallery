@@ -56,7 +56,14 @@ interface ExhibitionRecord {
   coverImage?: string;
   description?: string;
   shareToken: string;
+  /** 分享开关。false = 链接立即失效,拿着旧链接也打不开 */
   isPublic: boolean;
+  /** 到期时间 ISO,空表示永不过期 */
+  shareExpiresAt?: string;
+  /** 访问密码(bcrypt hash),空表示不需要密码 */
+  sharePasswordHash?: string;
+  /** 是否允许下载原图 */
+  shareAllowDownload?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -171,6 +178,33 @@ export function findExhibitionById(id: string) {
 
 export function findExhibitionByShareToken(token: string) {
   return readDB().exhibitions.find((e) => e.shareToken === token) || null;
+}
+
+/**
+ * 分享链接的可访问性判定。
+ * 之前 isPublic 是个摆设 —— 建册时写 false,但拿 token 照样打得开,
+ * 字段语义和实际行为对不上。现在它真的说了算。
+ */
+export type ShareGate =
+  | { ok: true }
+  | { ok: false; reason: "revoked" | "expired" | "password" };
+
+export function checkShareAccess(ex: ExhibitionRecord): ShareGate {
+  if (!ex.isPublic) return { ok: false, reason: "revoked" };
+  if (ex.shareExpiresAt && new Date(ex.shareExpiresAt).getTime() < Date.now()) {
+    return { ok: false, reason: "expired" };
+  }
+  if (ex.sharePasswordHash) return { ok: false, reason: "password" };
+  return { ok: true };
+}
+
+export function updateExhibition(id: string, userId: string, data: Partial<ExhibitionRecord>) {
+  const db = readDB();
+  const idx = db.exhibitions.findIndex((e) => e.id === id && e.userId === userId);
+  if (idx === -1) return null;
+  db.exhibitions[idx] = { ...db.exhibitions[idx], ...data, updatedAt: new Date().toISOString() };
+  writeDB(db);
+  return db.exhibitions[idx];
 }
 
 // --- 页边吐槽(欄外) ---
