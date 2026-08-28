@@ -319,7 +319,12 @@ function pickTextVariant(text: string): "tobira" | "narration" | "shout" {
 }
 
 /** 把若干「话」排成书页 */
-export function paginate(chapters: Chapter[]): (PhotoPageData | TextPageData)[] {
+export function paginate(
+  chapters: Chapter[],
+  /** 用户自定义的页边吐槽;传空则用内置那套 */
+  marginNotes: readonly string[] = MARGIN_NOTES
+): (PhotoPageData | TextPageData)[] {
+  const notes = marginNotes.length ? marginNotes : MARGIN_NOTES;
   const pages: (PhotoPageData | TextPageData)[] = [];
   let counter = 0;
 
@@ -336,7 +341,7 @@ export function paginate(chapters: Chapter[]): (PhotoPageData | TextPageData)[] 
           color: chapter.color,
           variant,
           part: parts.length > 1 ? { index: i + 1, total: parts.length } : undefined,
-          marginNote: i === parts.length - 1 ? MARGIN_NOTES[(chapter.no + i) % MARGIN_NOTES.length] : undefined,
+          marginNote: i === parts.length - 1 ? notes[(chapter.no + i) % notes.length] : undefined,
         });
       });
     }
@@ -379,7 +384,7 @@ export function paginate(chapters: Chapter[]): (PhotoPageData | TextPageData)[] 
         sfx: counter % 3 === 1 ? SFX_POOL[counter % SFX_POOL.length] : undefined,
         focus: counter % 5 === 3,
         // 每两页一条页边吐槽,不是每页都有 —— 话密了就不好笑了
-        marginNote: counter % 2 === 0 ? MARGIN_NOTES[counter % MARGIN_NOTES.length] : undefined,
+        marginNote: counter % 2 === 0 ? notes[counter % notes.length] : undefined,
       });
       pageIdx++;
       counter++;

@@ -9,6 +9,8 @@ interface DB {
   posts: PostRecord[];
   exhibitions: ExhibitionRecord[];
   exhibitionPosts: ExhibitionPostRecord[];
+  /** 每个用户自定义的页边吐槽;没配过就用内置那套 */
+  marginNotes?: Record<string, string[]>;
 }
 
 interface UserRecord {
@@ -69,7 +71,7 @@ interface ExhibitionPostRecord {
 function readDB(): DB {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
   if (!fs.existsSync(DATA_FILE)) {
-    const empty: DB = { users: [], posts: [], exhibitions: [], exhibitionPosts: [] };
+    const empty: DB = { users: [], posts: [], exhibitions: [], exhibitionPosts: [], marginNotes: {} };
     fs.writeFileSync(DATA_FILE, JSON.stringify(empty, null, 2));
     return empty;
   }
@@ -169,6 +171,24 @@ export function findExhibitionById(id: string) {
 
 export function findExhibitionByShareToken(token: string) {
   return readDB().exhibitions.find((e) => e.shareToken === token) || null;
+}
+
+// --- 页边吐槽(欄外) ---
+
+/** 返回用户自定义的吐槽;没配过返回 null,由调用方退回内置那套 */
+export function getMarginNotes(userId: string): string[] | null {
+  const notes = readDB().marginNotes?.[userId];
+  return notes && notes.length ? notes : null;
+}
+
+export function saveMarginNotes(userId: string, notes: string[]) {
+  const db = readDB();
+  if (!db.marginNotes) db.marginNotes = {};
+  const cleaned = notes.map((n) => n.trim()).filter(Boolean).slice(0, 60);
+  if (cleaned.length) db.marginNotes[userId] = cleaned;
+  else delete db.marginNotes[userId]; // 清空 = 恢复内置
+  writeDB(db);
+  return cleaned;
 }
 
 // --- ExhibitionPosts ---

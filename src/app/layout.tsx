@@ -75,6 +75,9 @@ export default async function RootLayout({
                       <Link href="/import" className="hover:text-[var(--accent)] transition-colors">
                         上传照片
                       </Link>
+                      <Link href="/settings" className="hover:text-[var(--accent)] transition-colors">
+                        页边吐槽
+                      </Link>
                       <span className="manga-tag">{user.name || user.email?.split("@")[0]}</span>
                       <LogoutButton />
                     </>

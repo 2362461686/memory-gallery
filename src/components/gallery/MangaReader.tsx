@@ -21,6 +21,8 @@ interface MangaReaderProps {
   exhibits: Exhibit[];
   title: string;
   description?: string | null;
+  /** 用户自定义的页边吐槽,不传则用内置 */
+  marginNotes?: string[];
 }
 
 function formatDay(d: Date | string | null | undefined): string {
@@ -75,7 +77,7 @@ function buildChapters(exhibits: Exhibit[]): Chapter[] {
     .map((photos, i) => ({ no: i + 1, photos, color: chapterColor(photos) }));
 }
 
-export default function MangaReader({ exhibits, title, description }: MangaReaderProps) {
+export default function MangaReader({ exhibits, title, description, marginNotes }: MangaReaderProps) {
   const pages = useMemo<Page[]>(() => {
     const chapters = buildChapters(exhibits);
     const all = chapters.flatMap((c) => c.photos);
@@ -87,7 +89,7 @@ export default function MangaReader({ exhibits, title, description }: MangaReade
 
     return [
       { kind: "cover", cover, color: cover?.color },
-      ...paginate(chapters).map((p) => ("kind" in p ? p : { kind: "photos" as const, ...p })),
+      ...paginate(chapters, marginNotes).map((p) => ("kind" in p ? p : { kind: "photos" as const, ...p })),
       {
         kind: "back" as const,
         count: pics.length,
@@ -96,7 +98,7 @@ export default function MangaReader({ exhibits, title, description }: MangaReade
         range: dates.length ? `${dates[dates.length - 1]} — ${dates[0]}` : "",
       },
     ];
-  }, [exhibits]);
+  }, [exhibits, marginNotes]);
 
   const [page, setPage] = useState(0);
 

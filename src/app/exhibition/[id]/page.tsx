@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth-helpers";
 import { redirect, notFound } from "next/navigation";
-import { findExhibitionById, findExhibitionPosts } from "@/lib/store";
+import { findExhibitionById, findExhibitionPosts, getMarginNotes } from "@/lib/store";
 import ShareButton from "./ShareButton";
 import Link from "next/link";
 import { IconArrowLeft, IconGallery } from "@/lib/icons";
@@ -11,6 +11,7 @@ export default async function ExhibitionPage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const exhibition = findExhibitionById(id); if (!exhibition || exhibition.userId !== session.id) notFound();
   const exhibitionPosts = findExhibitionPosts(exhibition.id);
+  const marginNotes = getMarginNotes(session.id) ?? undefined;
   const exhibits = exhibitionPosts.map(ep => ep.post).filter((p): p is NonNullable<typeof p> => Boolean(p));
 
   return (
@@ -24,7 +25,7 @@ export default async function ExhibitionPage({ params }: { params: Promise<{ id:
         </div>
         <div className="flex gap-2 shrink-0"><ShareButton shareToken={exhibition.shareToken} /></div>
       </div>
-      {exhibits.length > 0 ? <MangaReader exhibits={exhibits} title={exhibition.title} description={exhibition.description} /> : (
+      {exhibits.length > 0 ? <MangaReader exhibits={exhibits} title={exhibition.title} description={exhibition.description} marginNotes={marginNotes} /> : (
         <div className="text-center py-24 glass-card"><IconGallery className="opacity-30 mx-auto mb-4" size={40} /><p className="opacity-60 mb-4 font-bold">这一本还是空的</p><Link href="/import" className="manga-btn manga-btn-accent">去收录回忆</Link></div>
       )}
     </div>
