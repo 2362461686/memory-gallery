@@ -111,17 +111,16 @@ export default function ImportPage() {
       {tab === "text" ? (
         <div className="glass-card p-6">
           <p className="text-sm font-black mb-1">没有照片的那天,也值得记一页</p>
-          <p className="text-xs opacity-55 font-bold mb-4">短句做成漫画中扉(大话数+竖排标题),长一点的做成手写旁白页;带感叹号的短句会变成呐喊。</p>
+          <p className="text-xs opacity-55 font-bold mb-4">写多长都可以 —— 短句做成漫画中扉(大话数+竖排标题),长文做成手写旁白页并自动续页,带感叹号的短句会变成呐喊。</p>
           <textarea
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
-            rows={6}
-            maxLength={500}
+            rows={8}
             placeholder="例:今天什么都没发生,但下班路上的晚霞很好看。"
             className="w-full px-4 py-3 bg-[var(--paper)] border-[3px] border-[var(--ink)] rounded-lg text-sm font-bold leading-relaxed resize-none placeholder:opacity-40 placeholder:font-normal focus:outline-none focus:shadow-[3px_3px_0_var(--accent)] transition-shadow"
           />
           <div className="flex justify-between items-center mt-2">
-            <span className="text-xs opacity-45 font-bold tabular-nums">{noteText.length} / 500</span>
+            <span className="text-xs opacity-45 font-bold tabular-nums">{noteText.length} 字{noteText.trim().length > 240 ? `(约 ${Math.ceil(noteText.trim().length / 240)} 页)` : ""}</span>
             <span className="text-xs opacity-45 font-bold">
               {/[!!]/.test(noteText) && noteText.trim().length <= 16
                 ? "→ 呐喊"

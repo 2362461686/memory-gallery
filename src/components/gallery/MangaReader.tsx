@@ -256,7 +256,7 @@ function PhotoPage({ page }: { page: PhotoPageData }) {
 }
 
 function TextPage({ page }: { page: TextPageData }) {
-  const { text, chapter, variant } = page;
+  const { text, chapter, variant, part } = page;
 
   return (
     <div className="h-full relative overflow-hidden">
@@ -281,12 +281,13 @@ function TextPage({ page }: { page: TextPageData }) {
           {/* 竖排标题:右上进入,占据整个右侧 */}
           <div className="absolute top-0 right-2 bottom-0 flex items-center">
             <p
-              className="font-black leading-[1.3] text-3xl sm:text-5xl"
+              className="font-black leading-[1.3]"
               style={{
                 writingMode: "vertical-rl",
                 textOrientation: "upright",
                 letterSpacing: "0.14em",
                 maxHeight: "88%",
+                fontSize: text.length <= 8 ? "3rem" : text.length <= 12 ? "2.4rem" : "1.9rem",
               }}
             >
               {text}
@@ -303,16 +304,32 @@ function TextPage({ page }: { page: TextPageData }) {
         </div>
       )}
 
-      {/* 旁白:手写体横排,像作者在页边写的话 */}
+      {/* 旁白:手写体横排,像作者在页边写的话。字号随篇幅收放,长文自动续页 */}
       {variant === "narration" && (
-        <div className="h-full flex items-center justify-center px-4">
+        <div className="h-full flex items-center justify-center px-2 sm:px-4">
           <div className="absolute inset-x-10 inset-y-12 tone-dots opacity-15 rounded pointer-events-none" />
-          <div className="relative max-w-lg">
-            <div className="h-[3px] bg-[var(--ink)] w-14 mb-5" />
-            <p className="handwriting text-lg sm:text-2xl font-bold leading-[2] whitespace-pre-wrap">
+          <div className="relative max-w-xl w-full">
+            <div className="h-[3px] bg-[var(--ink)] w-14 mb-4" />
+            <p
+              className="handwriting font-bold whitespace-pre-wrap overflow-y-auto"
+              style={{
+                // 短则大字,长则收小,始终把整页填得体面
+                fontSize: text.length <= 60 ? "1.5rem" : text.length <= 120 ? "1.25rem" : "1.05rem",
+                lineHeight: text.length <= 60 ? 2 : text.length <= 120 ? 1.9 : 1.8,
+                maxHeight: "62vh",
+              }}
+            >
               {text}
             </p>
-            <div className="h-[3px] bg-[var(--ink)] w-14 mt-5 ml-auto" />
+            <div className="flex items-center justify-between mt-4">
+              <div className="h-[3px] bg-[var(--ink)] w-14" />
+              {part && (
+                <span className="text-[0.65rem] font-black opacity-45 tracking-widest tabular-nums">
+                  {part.index} / {part.total}
+                  {part.index < part.total ? " ▸" : ""}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -321,7 +338,7 @@ function TextPage({ page }: { page: TextPageData }) {
       {variant === "shout" && (
         <div className="h-full flex items-center justify-center relative">
           <div className="absolute inset-0 focus-lines opacity-70" />
-          <p className="manga-sfx manga-sfx-loud relative text-4xl sm:text-6xl text-center px-8 leading-tight">
+          <p className="manga-sfx manga-sfx-loud relative text-center px-8 leading-tight" style={{ fontSize: text.length <= 6 ? "4rem" : text.length <= 12 ? "3rem" : "2.2rem" }}>
             {text}
           </p>
         </div>

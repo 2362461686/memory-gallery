@@ -205,6 +205,51 @@ export interface TextPageData {
   chapter: number;
   color?: string;
   variant: "tobira" | "narration" | "shout";
+  /** 长文分页时的页序,单页为 undefined */
+  part?: { index: number; total: number };
+}
+
+/** 一页旁白的容量上限:超过就分页,不截断 */
+const NARRATION_PAGE_CHARS = 240;
+
+/**
+ * 长文切页:优先在段落处断开,其次在句末,最后才硬断。
+ * 用户想写多长写多长 —— 排版负责把它排下,不负责限制他。
+ */
+function splitNarration(text: string): string[] {
+  const trimmed = text.trim();
+  if (trimmed.length <= NARRATION_PAGE_CHARS) return [trimmed];
+
+  // 切成最小不可分单元:先自然段,段内再按句末标点
+  const units: string[] = [];
+  for (const para of trimmed.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)) {
+    if (para.length <= NARRATION_PAGE_CHARS) {
+      units.push(para);
+      continue;
+    }
+    for (const sentence of para.match(/[^。!?!?;;\n]+[。!?!?;;]?/g) || [para]) {
+      // 单句仍超长(没标点的长串):硬切,一个字都不丢
+      for (let i = 0; i < sentence.length; i += NARRATION_PAGE_CHARS) {
+        units.push(sentence.slice(i, i + NARRATION_PAGE_CHARS));
+      }
+    }
+  }
+
+  // 贪心装页
+  const pages: string[] = [];
+  let buf = "";
+  for (const unit of units) {
+    if (!buf) {
+      buf = unit;
+    } else if (buf.length + unit.length + 2 <= NARRATION_PAGE_CHARS) {
+      buf += `\n\n${unit}`;
+    } else {
+      pages.push(buf);
+      buf = unit;
+    }
+  }
+  if (buf) pages.push(buf);
+  return pages;
 }
 
 export interface Chapter {
@@ -244,12 +289,18 @@ export function paginate(chapters: Chapter[]): (PhotoPageData | TextPageData)[] 
 
   for (const chapter of chapters) {
     for (const note of chapter.photos.filter((p) => p.textOnly)) {
-      pages.push({
-        kind: "text",
-        text: note.caption,
-        chapter: chapter.no,
-        color: chapter.color,
-        variant: pickTextVariant(note.caption),
+      const variant = pickTextVariant(note.caption);
+      // 旁白可能很长 —— 切成多页连排,写多少都排得下
+      const parts = variant === "narration" ? splitNarration(note.caption) : [note.caption.trim()];
+      parts.forEach((text, i) => {
+        pages.push({
+          kind: "text",
+          text,
+          chapter: chapter.no,
+          color: chapter.color,
+          variant,
+          part: parts.length > 1 ? { index: i + 1, total: parts.length } : undefined,
+        });
       });
     }
 

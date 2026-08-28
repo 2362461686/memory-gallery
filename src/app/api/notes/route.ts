@@ -16,9 +16,6 @@ export async function POST(request: Request) {
     if (!content) {
       return NextResponse.json({ error: "写点什么吧" }, { status: 400 });
     }
-    if (content.length > 500) {
-      return NextResponse.json({ error: "一页写不下这么多,500 字以内" }, { status: 400 });
-    }
 
     const post = createPost({
       userId: session.id,
