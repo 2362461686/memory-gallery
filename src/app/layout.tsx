@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/jwt";
-import { Noto_Serif_SC, ZCOOL_QingKe_HuangYou, Ma_Shan_Zheng } from "next/font/google";
+import localFont from "next/font/local";
 import Link from "next/link";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import NavMenu from "@/components/NavMenu";
@@ -12,23 +12,27 @@ import "./globals.css";
 // display = 站酷庆科黄油体,粗壮扁方,漫画标题的重量
 // hand    = 马善政毛笔楷书,真毛笔手写(原来的 Xingkai SC 只有 macOS 有,在别的系统上根本没生效)
 // body    = Noto Serif SC,明朝体是日漫正文的惯例
-const notoSerif = Noto_Serif_SC({
-  subsets: ["latin"],
-  weight: ["400", "700", "900"],
+const notoSerif = localFont({
+  src: [
+    { path: "../fonts/noto-serif-sc-400.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/noto-serif-sc-700.woff2", weight: "700", style: "normal" },
+    { path: "../fonts/noto-serif-sc-900.woff2", weight: "900", style: "normal" },
+  ],
   variable: "--font-serif",
   display: "swap",
 });
 
-const zcool = ZCOOL_QingKe_HuangYou({
-  subsets: ["latin"],
-  weight: "400",
+// 自托管:字体文件在 src/fonts/,只含项目实际用到的 621 个字(共约 400KB)。
+// 不走 next/font/google —— 那需要构建期访问 fonts.gstatic.com,
+// 在代理环境下会超时,连带整页 500。自托管后构建与运行都不再依赖外网。
+const zcool = localFont({
+  src: "../fonts/zcool-qingke.woff2",
   variable: "--font-display",
   display: "swap",
 });
 
-const maShan = Ma_Shan_Zheng({
-  subsets: ["latin"],
-  weight: "400",
+const maShan = localFont({
+  src: "../fonts/mashan.woff2",
   variable: "--font-hand",
   display: "swap",
 });
