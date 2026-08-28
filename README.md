@@ -15,11 +15,16 @@
 ## 跑起来
 
 ```bash
-npm install
-npm run dev        # http://localhost:3000
+npm ci                                   # 按 lockfile 装,版本锁定
+cp .env.example .env
+echo "AUTH_SECRET=$(openssl rand -base64 32)" >> .env
+npm run dev                              # http://localhost:3000
 ```
 
-AI 策展需要环境变量 `DEEPSEEK_API_KEY`(不配也能用,只是没有 AI 装订)。
+⚠ **`AUTH_SECRET` 必填**(至少 32 字符),缺失会直接拒绝启动 —— 这是有意为之:
+带默认密钥跑起来等于把会话签名密钥公开,任何人都能伪造登录态。
+
+`DEEPSEEK_API_KEY` 选填。不配也能用:装订会自动降级为按日期/地点起名。
 
 ## 技术栈
 
