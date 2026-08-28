@@ -8,7 +8,7 @@ const chapters = [
     title: "把照片传上来",
     desc: "这些天去了哪里、吃了什么、见了谁。拍摄时间和地点自动读取，截图也收 —— 它也是回忆的一种。",
     sfx: "咔嚓",
-    sfxStyle: "",
+    sfxStyle: "fx-sfx-shake",
   },
   {
     Icon: IconSparkles,
@@ -16,7 +16,7 @@ const chapters = [
     title: "自动排成分镜",
     desc: "格子的比例跟着照片走，竖图不会被裁。一起传的算一话，大小有起伏，像真的漫画页。",
     sfx: "唰",
-    sfxStyle: "manga-sfx-soft",
+    sfxStyle: "manga-sfx-soft fx-sfx-shake",
   },
   {
     Icon: IconGallery,
@@ -24,7 +24,7 @@ const chapters = [
     title: "装订成一卷",
     desc: "挑内容、排顺序、选封面、起名字，确认后装订。发给谁看，随时能撤回。",
     sfx: "砰!",
-    sfxStyle: "manga-sfx-loud",
+    sfxStyle: "manga-sfx-loud fx-sfx-bounce",
   },
 ];
 
@@ -33,12 +33,12 @@ export default function Home() {
     <div className="px-4 sm:px-6">
       {/* ── 刊头:整屏,标题砸在纸上 ── */}
       <section className="min-h-[calc(100vh-140px)] flex items-center justify-center py-12">
-        <div className="masthead speed-lines speed-sweep w-full max-w-3xl relative overflow-hidden">
+        <div className="masthead speed-lines fx-speed fx-shock w-full max-w-3xl relative overflow-hidden">
           <span className="absolute top-4 left-4 manga-tag manga-tag-accent rotate-[-4deg] z-10">连载中</span>
           <span className="absolute top-4 right-4 manga-tag rotate-[3deg] z-10">全彩</span>
 
-          <div className="px-6 sm:px-10 py-16 sm:py-24 text-center relative">
-            <h1 className="title-impact text-5xl sm:text-7xl font-black tracking-tight leading-[0.95] mb-6">
+          <div className="px-6 sm:px-10 py-16 sm:py-24 text-center relative z-10">
+            <h1 className="title-impact fx-title-quake text-5xl sm:text-7xl font-black tracking-tight leading-[0.95] mb-6 relative z-10">
               把日子
               <br />
               <span className="text-[var(--accent)]">画成回忆集</span>
@@ -60,7 +60,7 @@ export default function Home() {
             </div>
           </div>
 
-          <span className="sfx-in manga-sfx absolute bottom-5 left-6 text-4xl sm:text-5xl pointer-events-none">
+          <span className="sfx-in fx-sfx-shake manga-sfx absolute bottom-5 left-6 text-4xl sm:text-5xl pointer-events-none z-10">
             咔嚓
           </span>
         </div>
@@ -114,8 +114,8 @@ export default function Home() {
 
       {/* ── 收尾:下回预告 ── */}
       <section className="max-w-2xl mx-auto pb-24">
-        <div className="panel-in masthead speed-lines text-center px-6 py-14">
-          <span className="manga-sfx text-5xl sm:text-6xl block mb-5">未完</span>
+        <div className="panel-in masthead speed-lines fx-speed text-center px-6 py-14">
+          <span className="manga-sfx fx-sfx-bounce text-5xl sm:text-6xl inline-block mb-5">未完</span>
           <p className="handwriting text-lg font-bold opacity-80 mb-2">
             下一话：还没发生的那些日子
           </p>

@@ -78,7 +78,11 @@ export default async function DashboardPage() {
                 </p>
 
                 <div className="flex flex-wrap gap-3 mt-6">
-                  {unbound.length > 0 && <BindButton postCount={unbound.length} />}
+                  {unbound.length > 0 && (
+                    <span className="fx-breathe inline-block">
+                      <BindButton postCount={unbound.length} />
+                    </span>
+                  )}
                   <Link href="/import" className="manga-btn manga-btn-ghost">
                     <IconPlus size={16} />收录新回忆
                   </Link>
@@ -87,7 +91,7 @@ export default async function DashboardPage() {
 
               {/* 右侧:最近一话的封面照压边,像期刊封面 */}
               {latest?.photos[0] && (
-                <div className="hidden sm:block relative w-52 border-l-[3px] border-[var(--ink)] overflow-hidden">
+                <div className="fx-kenburns hidden sm:block relative w-52 border-l-[3px] border-[var(--ink)] overflow-hidden">
                   <img src={latest.photos[0]} alt="" className="w-full h-full object-cover" />
                   <span className="absolute bottom-3 left-3 manga-tag !text-[0.62rem]">
                     第 {timeline.length} 话
@@ -213,7 +217,7 @@ export default async function DashboardPage() {
 function EmptyState() {
   return (
     <div className="py-16 sm:py-24">
-      <div className="masthead max-w-lg mx-auto speed-lines">
+      <div className="masthead max-w-lg mx-auto speed-lines fx-speed">
         <div className="p-8 sm:p-12 text-center">
           <span className="manga-tag manga-tag-sky rotate-[-3deg] inline-block mb-5">第 0 话</span>
           <h1 className="text-3xl sm:text-4xl font-black leading-tight mb-4">故事还没开始</h1>
