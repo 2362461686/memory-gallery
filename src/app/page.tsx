@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PANEL_ART } from "@/components/home/PanelArt";
+import Halftone from "@/components/home/Halftone";
 
 /**
  * 首页的记忆点(signature):一页会自己装订起来的漫画。
