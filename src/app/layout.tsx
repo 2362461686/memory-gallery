@@ -6,9 +6,7 @@ import Link from "next/link";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import LogoutButton from "@/components/LogoutButton";
-import { BackgroundFX } from "@/components/ClientLayout";
 import ClickEffect from "@/components/ClickEffect";
-import StarField from "@/components/StarField";
 import "./globals.css";
 
 const notoSerif = Noto_Serif_SC({
@@ -19,9 +17,9 @@ const notoSerif = Noto_Serif_SC({
 });
 
 export const metadata: Metadata = {
-  title: "Memory Gallery - 把你的数字生活变成一场展览",
+  title: "Memory Gallery - 把日子画成回忆集",
   description:
-    "Memory Gallery 是一个虚拟策展人，帮你把社交媒体内容整理成主题展览，支持 QQ 空间导入、相册上传，AI 自动策展。",
+    "Memory Gallery 是你的漫画风回忆录:上传这些天拍下的照片,自动按时间线整理,做成一本精美的回忆集。",
 };
 
 async function getUser() {
@@ -45,73 +43,43 @@ export default async function RootLayout({
 
   return (
     <html lang="zh-CN" className={`${notoSerif.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-700 bg-slate-50 dark:bg-slate-950 font-serif">
+      <head>
+        {/* 水合前定妥主题,避免刷新时纸白/夜刊闪一下 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem("mg-theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark")}catch(e){}`,
+          }}
+        />
+      </head>
+      <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative font-serif">
         <ThemeProvider>
           <div className="flex-1 flex flex-col relative">
-            {/* Background effects */}
-            <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
-              {/* Gradient overlay */}
-              <div className="absolute inset-0 z-[-9] bg-white/40 dark:bg-slate-900/50 backdrop-blur-sm transition-colors duration-700" />
-
-              {/* Animated gradient */}
-              <div
-                className="absolute inset-0 z-[-8] opacity-40 dark:opacity-15 mix-blend-color transition-opacity duration-700"
-                style={{
-                  background: "linear-gradient(-45deg, #c084fc, #f472b6, #67e8f9, #a5b4fc, #f9a8d4)",
-                  backgroundSize: "400% 400%",
-                  animation: "gradientMove 15s ease infinite",
-                }}
-              />
-
-              {/* Color blobs */}
-              <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/50 dark:bg-indigo-900/20 blur-[100px] rounded-full z-[-7] md:mix-blend-overlay" />
-              <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-pink-200/50 dark:bg-purple-900/30 blur-[100px] rounded-full z-[-7] md:mix-blend-overlay" />
-
-              {/* StarField + Fireflies */}
-              <StarField />
-              <BackgroundFX />
-            </div>
-
-            {/* Navigation */}
-            <nav className="relative z-10 glass rounded-none border-t-0 border-x-0">
+            {/* Navigation:漫画分格页眉 */}
+            <nav className="relative z-10 glass border-t-0 border-x-0" style={{ boxShadow: "0 4px 0 var(--ink)" }}>
               <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-                <Link
-                  href="/"
-                  className="text-lg font-black tracking-tight bg-gradient-to-r from-fuchsia-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent"
-                >
-                  Memory Gallery
+                <Link href="/" className="flex items-center gap-2 group">
+                  <span className="inline-flex items-center justify-center w-8 h-8 border-[3px] border-[var(--ink)] bg-[var(--accent)] text-[#fffdf7] font-black text-sm rounded-md shadow-[2px_2px_0_var(--ink)] group-hover:rotate-[-6deg] transition-transform">
+                    忆
+                  </span>
+                  <span className="text-lg font-black tracking-tight">Memory Gallery</span>
                 </Link>
-                <div className="flex items-center gap-5 text-sm">
-                  <Link
-                    href="/"
-                    className="text-slate-600 dark:text-slate-300 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
-                  >
+                <div className="flex items-center gap-5 text-sm font-bold">
+                  <Link href="/" className="hover:text-[var(--accent)] transition-colors">
                     首页
                   </Link>
                   {user ? (
                     <>
-                      <Link
-                        href="/dashboard"
-                        className="text-slate-600 dark:text-slate-300 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
-                      >
-                        仪表盘
+                      <Link href="/dashboard" className="hover:text-[var(--accent)] transition-colors">
+                        我的回忆
                       </Link>
-                      <Link
-                        href="/import"
-                        className="text-slate-600 dark:text-slate-300 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
-                      >
-                        导入
+                      <Link href="/import" className="hover:text-[var(--accent)] transition-colors">
+                        上传照片
                       </Link>
-                      <span className="text-slate-400 dark:text-slate-500 text-xs">
-                        {user.name || user.email?.split("@")[0]}
-                      </span>
+                      <span className="manga-tag">{user.name || user.email?.split("@")[0]}</span>
                       <LogoutButton />
                     </>
                   ) : (
-                    <Link
-                      href="/login"
-                      className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:from-fuchsia-600 hover:to-purple-600 text-white text-xs font-medium transition-all"
-                    >
+                    <Link href="/login" className="manga-btn manga-btn-accent !py-1.5 !px-4 !text-xs">
                       登录
                     </Link>
                   )}
@@ -124,8 +92,8 @@ export default async function RootLayout({
             <main className="relative z-10 flex-1">{children}</main>
 
             {/* Footer */}
-            <footer className="relative z-10 py-8 text-center text-xs text-slate-400 dark:text-slate-600 glass border-b-0 border-x-0">
-              <p>Memory Gallery - 把你的数字生活变成一场展览</p>
+            <footer className="relative z-10 py-6 text-center text-xs glass border-b-0 border-x-0" style={{ boxShadow: "0 -4px 0 var(--ink)" }}>
+              <p className="font-bold opacity-60">Memory Gallery · 把日子画成回忆集 · 完</p>
             </footer>
           </div>
           <ClickEffect />

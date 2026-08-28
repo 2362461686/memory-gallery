@@ -1,36 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 忆 Memory Gallery · 把日子画成回忆集
 
-## Getting Started
+一本**漫画风的回忆录**:上传这些天拍下的照片,按时间线自动整理成分镜,AI 帮你装订成一册册可分享的回忆集。
 
-First, run the development server:
+## 它做什么
+
+1. **收录** — 上传照片(JPG/PNG/GIF/WebP/HEIC,HEIC 自动转 JPG),拍摄时间与 GPS 从 EXIF 自动读取
+2. **连载** — 照片按"天"分组成时间线分镜:哪天、在哪、拍了什么,一目了然
+3. **装订** — DeepSeek AI 归类打标,起标题、写卷首语,生成可分享链接的回忆集
+
+## 视觉
+
+2D 漫画风(单行本手感):墨线描边、硬投影、平涂印刷色(红/黄/青)、网点纸面、手绘抖动边框、话数徽章与拟声词。深色模式是"夜刊"——炭纸白线。
+
+## 跑起来
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+AI 策展需要环境变量 `DEEPSEEK_API_KEY`(不配也能用,只是没有 AI 装订)。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 技术栈
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Next.js 16 App Router · React 19 · Tailwind 4 · three.js(3D 翻阅回忆集)· exifr(EXIF)· heic-convert(HEIC 转码)· 文件型 JSON 存储(个人部署够用)
 
-## Learn More
+## 已知边界
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 数据存 `data/db.json`、图片存 `public/uploads/`,单机部署方案;上 Serverless 平台需改造存储
+- 曾有的 QQ 空间 Cookie 导入已移除:接口非官方、防盗链、Cookie 随时失效,不值得用户折腾

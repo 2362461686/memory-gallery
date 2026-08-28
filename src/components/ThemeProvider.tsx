@@ -2,34 +2,28 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 const ThemeContext = createContext({
-  isDark: true,
+  isDark: false,
   toggleTheme: () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [isDark, setIsDark] = useState(true);
-  const [mounted, setMounted] = useState(false);
+  // 主题类名由 layout 里的前置脚本在 React 水合前就写好了,
+  // 这里直接从 DOM 读初值 —— 不在 effect 里 setState,也就没有闪烁和级联渲染
+  const [isDark, setIsDark] = useState(() =>
+    typeof document !== "undefined"
+      ? document.documentElement.classList.contains("dark")
+      : false
+  );
 
   useEffect(() => {
-    setMounted(true);
-    const saved = localStorage.getItem("mg-theme");
-    const dark = saved !== "light";
-    setIsDark(dark);
-    document.documentElement.classList.toggle("dark", dark);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
     document.documentElement.classList.toggle("dark", isDark);
-  }, [isDark, mounted]);
+  }, [isDark]);
 
   const toggleTheme = () => {
     const next = !isDark;
     setIsDark(next);
     localStorage.setItem("mg-theme", next ? "dark" : "light");
   };
-
-  if (!mounted) return <div className="invisible">{children}</div>;
 
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>

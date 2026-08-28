@@ -7,7 +7,7 @@ export default function ClickEffect() {
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas) return;
     const ctx = canvas.getContext("2d"); if (!ctx) return;
-    let ripples: Ripple[] = [];
+    const ripples: Ripple[] = [];
 
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     window.addEventListener("resize", resize); resize();

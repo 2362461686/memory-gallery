@@ -16,4 +16,6 @@ export {
   MessageCircle as IconMessageCircle,
   SunMedium as IconSun,
   Moon as IconMoon,
+  MapPin as IconMapPin,
+  CalendarDays as IconCalendar,
 } from "lucide-react";
