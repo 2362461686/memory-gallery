@@ -1,28 +1,38 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helpers";
-import { findPostsByUser, updatePost, createExhibition, createExhibitionPost } from "@/lib/store";
+import { findPostsByUser, updatePost, createExhibition, createExhibitionPost, findExhibitionsByUser } from "@/lib/store";
 import { curatePosts } from "@/lib/deepseek";
 
 type Post = ReturnType<typeof findPostsByUser>[number];
 
 // 没有 AI 也要能成册:按收录的日期跨度起名,按顺序装订
-function fallbackCuration(posts: Post[]) {
+function fallbackCuration(posts: Post[], seq: number) {
   const days = [...new Set(posts.map((p) =>
     new Date(p.postedAt || p.createdAt).toLocaleDateString("zh-CN", { month: "long", day: "numeric" })
   ))];
   const places = [...new Set(posts.map((p) => p.location).filter(Boolean))];
+  const photoCount = posts.filter((p) => p.contentType !== "text").length;
+  const noteCount = posts.length - photoCount;
 
-  const title = places.length
-    ? `${places[0]}${places.length > 1 ? "等地" : ""}的${days.length}天`
-    : days.length === 1
-      ? `${days[0]}这一天`
-      : `${days[days.length - 1]} 到 ${days[0]}`;
+  // 标题要能互相区分 —— 同名的"8月28日这一天"堆四本,用户根本认不出哪本是哪本
+  let title: string;
+  if (places.length) {
+    title = `${places[0]}${places.length > 1 ? "等地" : ""}的${days.length}天`;
+  } else if (days.length > 1) {
+    title = `${days[days.length - 1]} 到 ${days[0]}`;
+  } else {
+    // 同一天可能装订多本,用第几卷区分,不留重名
+    title = seq > 1 ? `${days[0]} · 第 ${seq} 卷` : `${days[0]}这一天`;
+  }
 
-  const description = `这一卷收录了 ${posts.length} 张回忆${
-    days.length > 1 ? `,横跨 ${days.length} 天` : ""
-  }${places.length ? `,去过 ${places.join("、")}` : ""}。`;
+  const parts = [`这一卷收录了`];
+  if (photoCount) parts.push(`${photoCount} 张照片`);
+  if (noteCount) parts.push(`${photoCount ? "、" : ""}${noteCount} 段手记`);
+  if (days.length > 1) parts.push(`,横跨 ${days.length} 天`);
+  if (places.length) parts.push(`,去过 ${places.join("、")}`);
+  parts.push("。");
 
-  return { title, description, theme: "life" };
+  return { title, description: parts.join(""), theme: "life" };
 }
 
 export async function POST(request: Request) {
@@ -43,6 +53,7 @@ export async function POST(request: Request) {
     let theme: string;
     let aiUsed = false;
     let pendingAiUpdates: [string, Record<string, string>][] = [];
+    let fallbackReason: string | null = null;
 
     try {
       const curation = await curatePosts(posts);
@@ -59,9 +70,19 @@ export async function POST(request: Request) {
       ({ title, description, theme } = curation);
       aiUsed = true;
     } catch (err) {
-      // AI 不可用(没配 key / 超时 / 返回不合规)不该挡住成册
+      // AI 不可用(没配 key / 401 / 超时 / 返回不合规)不该挡住成册,
+      // 但必须让用户知道这本是自动起名的,而不是悄悄降级
       console.warn("AI curation unavailable, falling back:", err);
-      ({ title, description, theme } = fallbackCuration(posts));
+      fallbackReason = !process.env.DEEPSEEK_API_KEY
+        ? "没有配置 AI 密钥"
+        : err instanceof Error && /401|Authentication/i.test(err.message)
+          ? "AI 密钥无效"
+          : "AI 暂时不可用";
+      // 同一天已有几本,决定卷号,避免重名
+      const sameDayCount = findExhibitionsByUser(session.id).filter((e) =>
+        e.title.startsWith(new Date(posts[0].postedAt || posts[0].createdAt).toLocaleDateString("zh-CN", { month: "long", day: "numeric" }))
+      ).length;
+      ({ title, description, theme } = fallbackCuration(posts, sameDayCount + 1));
     }
 
     const exhibition = createExhibition({
@@ -93,7 +114,7 @@ export async function POST(request: Request) {
       updatePost(p.id, { isProcessed: true });
     }
 
-    return NextResponse.json({ exhibition, aiUsed }, { status: 201 });
+    return NextResponse.json({ exhibition, aiUsed, fallbackReason }, { status: 201 });
   } catch (error) {
     console.error("Curation error:", error);
     return NextResponse.json(

@@ -11,6 +11,7 @@ interface Exhibit {
   contentText?: string | null;
   aiDescription?: string | null;
   postedAt?: Date | string | null;
+  location?: string | null;
   batchId?: string | null;
   dominantColor?: string | null;
   aspectRatio?: number | null;
@@ -55,7 +56,7 @@ function buildChapters(exhibits: Exhibit[]): Chapter[] {
     if (urls.length === 0) {
       // 纯文字回忆:没有图,整页留给这段话
       if (caption) {
-        groups.get(key)!.push({ textOnly: true, caption, date: formatDay(ex.postedAt), ratio: 1, interest: 0 });
+        groups.get(key)!.push({ textOnly: true, caption, date: formatDay(ex.postedAt), place: ex.location || undefined, ratio: 1, interest: 0 });
       }
       continue;
     }
@@ -64,6 +65,7 @@ function buildChapters(exhibits: Exhibit[]): Chapter[] {
         url,
         caption,
         date: formatDay(ex.postedAt),
+        place: ex.location || undefined,
         color: ex.dominantColor || undefined,
         ratio: ex.aspectRatio || 4 / 3,
         interest: ex.interest ?? 0.5,
@@ -81,8 +83,10 @@ export default function MangaReader({ exhibits, title, description, marginNotes 
   const pages = useMemo<Page[]>(() => {
     const chapters = buildChapters(exhibits);
     // 封面/封底也带一句欄外 —— 否则首屏永远看不到这个设计
+    // marginNotes 传了空数组 = 用户主动关闭;undefined = 没配置过,用内置
+    const off = marginNotes !== undefined && marginNotes.length === 0;
     const pool = marginNotes?.length ? marginNotes : BUILTIN_MARGIN_NOTES;
-    const noteAt = (i: number) => pool[i % pool.length];
+    const noteAt = (i: number) => (off ? undefined : pool[i % pool.length]);
     const all = chapters.flatMap((c) => c.photos);
     const pics = all.filter((p) => !p.textOnly);
     const cover = pics.length
@@ -92,7 +96,7 @@ export default function MangaReader({ exhibits, title, description, marginNotes 
 
     return [
       { kind: "cover", cover, color: cover?.color, marginNote: noteAt(0) },
-      ...paginate(chapters, marginNotes).map((p) => ("kind" in p ? p : { kind: "photos" as const, ...p })),
+      ...paginate(chapters, marginNotes ?? BUILTIN_MARGIN_NOTES).map((p) => ("kind" in p ? p : { kind: "photos" as const, ...p })),
       {
         kind: "back" as const,
         count: pics.length,
@@ -259,7 +263,14 @@ function PhotoPage({ page }: { page: PhotoPageData }) {
                         : undefined,
                     }}
                   >
-                    <img src={photo.url} alt={photo.caption || "回忆"} loading="lazy" />
+                    <img
+                      src={photo.url}
+                      alt={
+                        [photo.caption, photo.date, photo.place].filter(Boolean).join("、") ||
+                        "一张没有文字说明的回忆照片"
+                      }
+                      loading="lazy"
+                    />
                   </div>
 
                   {markTarget?.ti === ti && markTarget?.pi === pi && (
@@ -269,14 +280,17 @@ function PhotoPage({ page }: { page: PhotoPageData }) {
                     />
                   )}
 
-                  {photo.date && panel.hero && (
-                    <span className="absolute top-2 right-2 z-20 manga-tag !text-[0.6rem]">
-                      {photo.date}
+                  {/* 旁白框:漫画里交代时间地点的方框,压在格子左上角。
+                      用户填过什么就显示什么 —— 这是真实回忆,比随机吐槽重要 */}
+                  {(photo.date || photo.place) && (
+                    <span className="absolute top-0 left-0 z-20 bg-[var(--paper)] border-r-[3px] border-b-[3px] border-[var(--ink)] px-2 py-[3px] text-[0.58rem] sm:text-[0.65rem] font-black leading-tight max-w-[80%] truncate">
+                      {[photo.date, photo.place].filter(Boolean).join(" · ")}
                     </span>
                   )}
 
-                  {photo.caption && panel.hero && (
-                    <figcaption className="absolute bottom-2 right-2 max-w-[75%] z-20 bg-[var(--paper)] border-[3px] border-[var(--ink)] px-3 py-1.5 text-[0.7rem] sm:text-xs font-bold leading-snug line-clamp-2 shadow-[3px_3px_0_var(--ink)]">
+                  {/* 用户原话:对白框,压在格底 */}
+                  {photo.caption && (
+                    <figcaption className="absolute bottom-2 right-2 max-w-[80%] z-20 bg-[var(--paper)] border-[3px] border-[var(--ink)] px-2.5 py-1.5 text-[0.65rem] sm:text-xs font-bold leading-snug line-clamp-2 shadow-[3px_3px_0_var(--ink)]">
                       {photo.caption}
                     </figcaption>
                   )}
@@ -300,7 +314,7 @@ function PhotoPage({ page }: { page: PhotoPageData }) {
 }
 
 function TextPage({ page }: { page: TextPageData }) {
-  const { text, chapter, variant, part } = page;
+  const { text, chapter, variant, part, meta } = page;
 
   return (
     <div className="h-full relative overflow-hidden">
@@ -323,6 +337,11 @@ function TextPage({ page }: { page: TextPageData }) {
               <span className="text-[0.6rem] font-black tracking-[0.4em] text-[var(--paper)] mt-0.5">
                 第 話
               </span>
+              {meta && (
+                <span className="mt-2 text-[0.55rem] font-black text-[var(--paper)] opacity-75 px-1 text-center leading-tight">
+                  {meta}
+                </span>
+              )}
             </div>
           </div>
 
@@ -362,8 +381,12 @@ function TextPage({ page }: { page: TextPageData }) {
             >
               {text}
             </p>
-            <div className="flex items-center justify-between mt-5">
-              <div className="h-[3px] bg-[var(--ink)] w-12" />
+            <div className="flex items-center justify-between mt-5 gap-3">
+              {meta ? (
+                <span className="text-[0.62rem] font-black opacity-55 truncate">{meta}</span>
+              ) : (
+                <div className="h-[3px] bg-[var(--ink)] w-12" />
+              )}
               {part && (
                 <span className="text-[0.65rem] font-black opacity-45 tracking-widest tabular-nums">
                   {part.index} / {part.total}

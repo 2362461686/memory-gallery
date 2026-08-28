@@ -35,6 +35,8 @@ export default async function DashboardPage() {
   const posts = findPostsByUser(session.id);
   const unbound = findPostsByUser(session.id, { isProcessed: false });
   const timeline = groupPosts(posts);
+  const photoCount = posts.filter((p) => p.contentType !== "text").length;
+  const noteCount = posts.length - photoCount;
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
@@ -42,7 +44,7 @@ export default async function DashboardPage() {
       <div className="flex items-center justify-between mb-10">
         <div>
           <h1 className="text-2xl font-black">{userName} 的回忆录</h1>
-          <p className="text-sm opacity-60 mt-1 font-bold">已连载 {timeline.length} 话 · {posts.length} 张回忆</p>
+          <p className="text-sm opacity-60 mt-1 font-bold">已连载 {timeline.length} 话 · {photoCount} 张照片{noteCount > 0 ? ` · ${noteCount} 段手记` : ""}</p>
         </div>
         <div className="flex gap-3">
           {unbound.length > 0 && <BindButton postCount={unbound.length} />}
@@ -84,7 +86,7 @@ export default async function DashboardPage() {
                         ) : (
                           <IconGallery className="opacity-30" size={40} />
                         )}
-                        <span className="absolute top-3 right-3 manga-tag">{count} 张</span>
+                        <span className="absolute top-3 right-3 manga-tag">{count} 条</span>
                       </div>
                       <div className="p-4">
                         <h3 className="font-black truncate group-hover:text-[var(--accent)] transition-colors">{exhibition.title}</h3>
@@ -115,7 +117,7 @@ export default async function DashboardPage() {
                         {entry.location && (
                           <span className="manga-tag manga-tag-sky"><IconMapPin size={12} />{entry.location}</span>
                         )}
-                        <span className="text-xs opacity-50 font-bold">{entry.photos.length} 张</span>
+                        <span className="text-xs opacity-50 font-bold">{entry.photos.length > 0 ? `${entry.photos.length} 张` : "手记"}</span>
                       </header>
                       {entry.texts.length > 0 && (
                         <p className="text-sm opacity-80 mb-3 line-clamp-2 leading-relaxed font-bold">{entry.texts.join(" / ")}</p>

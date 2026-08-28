@@ -14,6 +14,8 @@ export interface Photo {
   textOnly?: boolean;
   caption: string;
   date: string;
+  /** 用户交代的地点 —— 之前完全没进阅读页,等于把用户填的信息丢了 */
+  place?: string;
   color?: string;
   ratio: number;    // w/h
   interest: number; // 0-1
@@ -153,6 +155,8 @@ export interface PhotoPageData {
 export interface TextPageData {
   kind: "text";
   text: string;
+  /** 这段话写于何时何地 —— 用户交代过就显示 */
+  meta?: string;
   chapter: number;
   color?: string;
   variant: "tobira" | "narration" | "shout";
@@ -286,6 +290,7 @@ export function paginate(
         pages.push({
           kind: "text",
           text,
+          meta: [note.date, note.place].filter(Boolean).join(" · ") || undefined,
           chapter: chapter.no,
           color: chapter.color,
           variant,

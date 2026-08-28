@@ -178,12 +178,27 @@ export function findExhibitionByShareToken(token: string) {
 /** 返回用户自定义的吐槽;没配过返回 null,由调用方退回内置那套 */
 export function getMarginNotes(userId: string): string[] | null {
   const notes = readDB().marginNotes?.[userId];
-  return notes && notes.length ? notes : null;
+  if (!notes || !notes.length) return null;
+  if (notes.length === 1 && notes[0] === NOTES_OFF) return [];  // 关闭:空数组
+  return notes;
 }
 
-export function saveMarginNotes(userId: string, notes: string[]) {
+/** 关闭标记:存这一条表示用户主动关掉了页边吐槽,与"没配置过"区分开 */
+const NOTES_OFF = "__off__";
+
+export function isMarginNotesOff(userId: string): boolean {
+  const notes = readDB().marginNotes?.[userId];
+  return notes?.length === 1 && notes[0] === NOTES_OFF;
+}
+
+export function saveMarginNotes(userId: string, notes: string[], off = false) {
   const db = readDB();
   if (!db.marginNotes) db.marginNotes = {};
+  if (off) {
+    db.marginNotes[userId] = [NOTES_OFF];
+    writeDB(db);
+    return [];
+  }
   const cleaned = notes.map((n) => n.trim()).filter(Boolean).slice(0, 60);
   if (cleaned.length) db.marginNotes[userId] = cleaned;
   else delete db.marginNotes[userId]; // 清空 = 恢复内置

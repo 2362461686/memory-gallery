@@ -16,6 +16,8 @@ const notoSerif = Noto_Serif_SC({
 });
 
 export const metadata: Metadata = {
+  // 没有它,分享卡片会用 localhost 地址,微信等渠道预览就废了
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: "Memory Gallery - 把日子画成回忆集",
   description:
     "Memory Gallery 是你的漫画风回忆录:上传这些天拍下的照片,自动按时间线整理,做成一本精美的回忆集。",

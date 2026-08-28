@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helpers";
-import { getMarginNotes, saveMarginNotes } from "@/lib/store";
+import { getMarginNotes, saveMarginNotes, isMarginNotesOff } from "@/lib/store";
 import { MARGIN_NOTES } from "@/components/gallery/layout-engine";
 
 export async function GET() {
@@ -8,9 +8,11 @@ export async function GET() {
   if (!session?.id) return NextResponse.json({ error: "请先登录" }, { status: 401 });
 
   const custom = getMarginNotes(session.id);
+  const off = isMarginNotesOff(session.id);
   return NextResponse.json({
-    notes: custom ?? [...MARGIN_NOTES],
-    isCustom: custom !== null,
+    notes: off ? [] : custom ?? [...MARGIN_NOTES],
+    isCustom: !off && custom !== null && custom.length > 0,
+    off,
     builtin: [...MARGIN_NOTES],
   });
 }
@@ -20,7 +22,11 @@ export async function PUT(request: Request) {
   if (!session?.id) return NextResponse.json({ error: "请先登录" }, { status: 401 });
 
   try {
-    const { notes } = await request.json();
+    const { notes, off } = await request.json();
+    if (off) {
+      saveMarginNotes(session.id, [], true);
+      return NextResponse.json({ notes: [], isCustom: false, off: true });
+    }
     if (!Array.isArray(notes)) {
       return NextResponse.json({ error: "格式不对" }, { status: 400 });
     }
@@ -28,7 +34,7 @@ export async function PUT(request: Request) {
       session.id,
       notes.filter((n): n is string => typeof n === "string")
     );
-    return NextResponse.json({ notes: saved, isCustom: saved.length > 0 });
+    return NextResponse.json({ notes: saved, isCustom: saved.length > 0, off: false });
   } catch {
     return NextResponse.json({ error: "保存失败" }, { status: 500 });
   }

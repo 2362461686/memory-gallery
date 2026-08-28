@@ -12,6 +12,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const [off, setOff] = useState(false);
 
   useEffect(() => {
     fetch("/api/margin-notes")
@@ -21,6 +22,7 @@ export default function SettingsPage() {
           setNotes(d.notes);
           setBuiltin(d.builtin || []);
           setIsCustom(!!d.isCustom);
+          setOff(!!d.off);
         }
         setLoaded(true);
       })
@@ -54,6 +56,24 @@ export default function SettingsPage() {
   function update(i: number, text: string) {
     setNotes((n) => n.map((v, idx) => (idx === i ? text : v)));
     setMessage("");
+  }
+
+  async function toggleOff(nextOff: boolean) {
+    setSaving(true); setMessage("");
+    try {
+      const res = await fetch("/api/margin-notes", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nextOff ? { off: true } : { notes: builtin }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error);
+      setOff(!!d.off);
+      setIsCustom(!!d.isCustom);
+      if (!nextOff) setNotes(builtin);
+      setMessage(nextOff ? "已关闭 —— 回忆集页脚不再出现吐槽" : "已开启,先用内置那套");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "保存失败");
+    } finally { setSaving(false); }
   }
 
   async function save(next?: string[]) {
@@ -101,7 +121,24 @@ export default function SettingsPage() {
         <div className="mb-6 p-4 glass rounded-lg text-sm font-bold">{message}</div>
       )}
 
-      <div className="glass-card p-6">
+      {/* 开关:这是趣味功能,用户不想要就该能关掉,而不是永远盖在真实回忆上面 */}
+      <label className="glass-card p-4 mb-4 flex items-center justify-between gap-4 cursor-pointer">
+        <span>
+          <span className="font-black text-sm">在回忆集里显示页边吐槽</span>
+          <span className="block text-xs opacity-55 font-bold mt-0.5">
+            关掉之后,页脚只留页码,把版面完全交给你的照片和文字
+          </span>
+        </span>
+        <input
+          type="checkbox"
+          checked={!off}
+          disabled={saving}
+          onChange={(e) => toggleOff(!e.target.checked)}
+          className="w-6 h-6 shrink-0 accent-[var(--accent)] cursor-pointer"
+        />
+      </label>
+
+      <div className={`glass-card p-6 transition-opacity ${off ? "opacity-40 pointer-events-none" : ""}`}>
         <div className="flex items-center justify-between mb-4">
           <span className="manga-tag manga-tag-sky">
             {notes.length} / {MAX_NOTES} 条{isCustom ? " · 自定义" : " · 内置"}
