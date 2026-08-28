@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { PANEL_ART } from "@/components/home/PanelArt";
-import { FACES } from "@/components/home/Kohaku";
 
 /**
  * 首页的记忆点(signature):一页会自己装订起来的漫画。
@@ -40,7 +39,7 @@ export default function Home() {
     <div className="px-4 sm:px-6">
       {/* ════ SIGNATURE:自己装订起来的一页 ════ */}
       <section className="min-h-[calc(100vh-140px)] flex items-center justify-center py-10">
-        <div className="assemble-quake stage-push w-full max-w-3xl">
+        <div className="assemble-quake w-full max-w-3xl">
           <div className="masthead p-3 sm:p-5" style={{ aspectRatio: "4 / 3.1" }}>
             <div
               className="assemble h-full grid gap-2 sm:gap-3"
@@ -51,7 +50,6 @@ export default function Home() {
             >
               {panels.map((p, i) => {
                 const Art = PANEL_ART[i];
-                const Face = FACES[i];
                 return (
                 <figure
                   key={p.caption}
@@ -60,18 +58,10 @@ export default function Home() {
                     { "--drop-tilt": p.tilt, gridArea: areas[i] } as React.CSSProperties
                   }
                 >
-                  {/* 背景:场景线稿 */}
+                  {/* 线稿:格子落地之后才开始描 */}
                   <Art
-                    className="absolute inset-0 w-full h-full p-2 text-[var(--ink)] opacity-45"
+                    className="absolute inset-0 w-full h-full p-2 text-[var(--ink)]"
                     style={{ ["--ink-delay" as string]: `${0.2 + i * 0.16}s` }}
-                  />
-                  {/* 前景:角色与她此刻的表情 —— 有人在,才是动漫不是插图 */}
-                  <Face
-                    className="absolute inset-0 w-full h-full text-[var(--ink)]"
-                    style={{
-                      ["--ink-delay" as string]: `${0.44 + i * 0.16}s`,
-                      transform: `translate(${i % 2 ? "16%" : "-16%"}, 12%) scale(0.72)`,
-                    }}
                   />
                   {/* 旁白框:交代这是哪个瞬间 */}
                   <figcaption className="absolute top-0 left-0 bg-[var(--paper)] border-r-[3px] border-b-[3px] border-[var(--ink)] px-2 py-[3px] text-[0.6rem] sm:text-[0.7rem] font-black max-w-[88%] truncate">
