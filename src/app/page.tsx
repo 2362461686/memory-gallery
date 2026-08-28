@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PANEL_ART } from "@/components/home/PanelArt";
 
 /**
  * 首页的记忆点(signature):一页会自己装订起来的漫画。
@@ -47,14 +48,21 @@ export default function Home() {
                 gridTemplateRows: "1.15fr 1fr 1.5fr",
               }}
             >
-              {panels.map((p, i) => (
+              {panels.map((p, i) => {
+                const Art = PANEL_ART[i];
+                return (
                 <figure
                   key={p.caption}
-                  className={`manga-panel relative ${toneClass[p.tone]}`}
+                  className={`manga-panel relative overflow-hidden ${toneClass[p.tone]}`}
                   style={
                     { "--drop-tilt": p.tilt, gridArea: areas[i] } as React.CSSProperties
                   }
                 >
+                  {/* 线稿:格子落地之后才开始描 */}
+                  <Art
+                    className="absolute inset-0 w-full h-full p-2 text-[var(--ink)]"
+                    style={{ ["--ink-delay" as string]: `${0.2 + i * 0.16}s` }}
+                  />
                   {/* 旁白框:交代这是哪个瞬间 */}
                   <figcaption className="absolute top-0 left-0 bg-[var(--paper)] border-r-[3px] border-b-[3px] border-[var(--ink)] px-2 py-[3px] text-[0.6rem] sm:text-[0.7rem] font-black max-w-[88%] truncate">
                     {p.caption}
@@ -69,7 +77,8 @@ export default function Home() {
                     </span>
                   )}
                 </figure>
-              ))}
+                );
+              })}
 
               {/* 最后落下的一格:标题 —— 论点在这里落地 */}
               <div

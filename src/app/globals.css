@@ -572,6 +572,31 @@
     to   { opacity: 1; transform: rotate(-6deg) scale(1); }
   }
 
+  /* 线条自己描出来 —— 你看着这页漫画被画出来。
+     path 上都有 pathLength="1",所以不同长度的线用同一套时长。 */
+  .ink path, .ink rect, .ink circle {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: inkDraw 0.85s ease-out forwards;
+    /* 起始时间 = 该格落地的时刻,由外层 --ink-delay 传进来 */
+    animation-delay: calc(var(--ink-delay, 0s) + var(--stroke-i, 0) * 0.1s);
+  }
+  /* 同一格内笔画有先后 —— 一笔一笔描,不是整格同时亮 */
+  .ink > :nth-child(1)  { --stroke-i: 0; }
+  .ink > :nth-child(2)  { --stroke-i: 1; }
+  .ink > :nth-child(3)  { --stroke-i: 2; }
+  .ink > :nth-child(4)  { --stroke-i: 3; }
+  .ink > :nth-child(5)  { --stroke-i: 4; }
+  .ink > :nth-child(6)  { --stroke-i: 5; }
+  .ink > :nth-child(7)  { --stroke-i: 6; }
+  .ink > :nth-child(8)  { --stroke-i: 7; }
+  .ink > :nth-child(9)  { --stroke-i: 8; }
+  .ink > :nth-child(10) { --stroke-i: 9; }
+
+  @keyframes inkDraw {
+    to { stroke-dashoffset: 0; }
+  }
+
   /* 落地那一下的震 —— 整页轻微一顿 */
   .assemble-quake {
     animation: assembleQuake 1.5s ease-out 0.92s;
