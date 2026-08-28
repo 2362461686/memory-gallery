@@ -17,11 +17,13 @@
     --accent: #d6402b;
     --sun: #f7c948;
     --sky: #6db3d1;
+    /* 黄底与青底在两个主题里都不翻转,压在上面的字固定用深墨 */
+    --on-bright: #17130e;
     --font-serif: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'SimSun', serif;
   }
 
   .dark {
-    /* 夜章:炭纸白线 */
+    /* 夜章:炭纸白线。--on-bright 不变 —— 黄底青底不翻转 */
     --ink: #efe7d8;
     --paper: #1b1712;
     --accent: #ef5a41;
@@ -137,7 +139,7 @@
   gap: 0.3rem;
   padding: 0.15rem 0.6rem;
   background: var(--sun);
-  color: #1c1917;
+  color: var(--on-bright);
   border: 2px solid var(--ink);
   border-radius: 6px;
   font-size: 0.72rem;
@@ -145,7 +147,7 @@
   box-shadow: 2px 2px 0 var(--ink);
 }
 .manga-tag-accent { background: var(--accent); color: #fffdf7; }
-.manga-tag-sky { background: var(--sky); color: #1c1917; }
+.manga-tag-sky { background: var(--sky); color: var(--on-bright); }
 
 /* ---------- 章节标题(左侧墨条) ---------- */
 
@@ -348,6 +350,72 @@
   @keyframes sfxPop {
     from { transform: rotate(-6deg) scale(0); }
     to { transform: rotate(-6deg) scale(1); }
+  }
+}
+
+/* ============================================================
+   滚动驱动:漫画本来就是随视线逐格读下去的。
+   滚动 = 读下去,不是给页面加特效。
+   CSS 原生 animation-timeline,零 JS;不支持的浏览器直接是静态版。
+   ============================================================ */
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+
+    /* 分格入场:进入视野时落到纸上 */
+    .panel-in {
+      animation: panelIn linear both;
+      animation-timeline: view();
+      animation-range: entry 8% cover 34%;
+    }
+    @keyframes panelIn {
+      from { opacity: 0; transform: translateY(22px) rotate(-1.2deg); }
+      to   { opacity: 1; transform: translateY(0) rotate(0deg); }
+    }
+
+    /* 从右侧入场:契合漫画右起阅读的动线 */
+    .panel-in-r {
+      animation: panelInR linear both;
+      animation-timeline: view();
+      animation-range: entry 8% cover 36%;
+    }
+    @keyframes panelInR {
+      from { opacity: 0; transform: translateX(24px) rotate(1.4deg); }
+      to   { opacity: 1; transform: translateX(0) rotate(0deg); }
+    }
+
+    /* 标题冲击:漫画标题是砸在纸上的 */
+    .title-impact {
+      animation: titleImpact linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 26%;
+    }
+    @keyframes titleImpact {
+      from { opacity: 0; transform: scale(1.14); letter-spacing: 0.06em; }
+      to   { opacity: 1; transform: scale(1); letter-spacing: normal; }
+    }
+
+    /* 速度线随滚动扫过 */
+    .speed-sweep {
+      animation: speedSweep linear both;
+      animation-timeline: view();
+      animation-range: entry 0% exit 100%;
+    }
+    @keyframes speedSweep {
+      from { background-position: 0 0; }
+      to   { background-position: 220px 0; }
+    }
+
+    /* 拟声词弹入 */
+    .sfx-in {
+      animation: sfxIn cubic-bezier(0.34, 1.56, 0.64, 1) both;
+      animation-timeline: view();
+      animation-range: entry 12% cover 30%;
+    }
+    @keyframes sfxIn {
+      from { opacity: 0; transform: rotate(-6deg) scale(0.4); }
+      to   { opacity: 1; transform: rotate(-6deg) scale(1); }
+    }
   }
 }
 

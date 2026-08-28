@@ -146,7 +146,7 @@ export default function ImportPage() {
         >
           <input ref={fileInputRef} type="file" multiple accept="image/*,.heic,.heif" onChange={handleFileSelect} className="hidden" />
           <div className="w-14 h-14 rounded-md border-[3px] border-[var(--ink)] bg-[var(--sun)] flex items-center justify-center mx-auto mb-4 shadow-[3px_3px_0_var(--ink)]">
-            <IconUpload className="text-[#17130e]" size={26} />
+            <IconUpload className="text-[var(--on-bright)]" size={26} />
           </div>
           <p className="font-black mb-1">点击选择照片</p>
           <p className="text-xs opacity-60 font-bold">JPG / PNG / GIF / WebP / HEIC(自动转 JPG),单张 20MB 内,可多选</p>
