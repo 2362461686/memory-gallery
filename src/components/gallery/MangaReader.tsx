@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { paginate, chapterColor, NEXT_EPISODE, type Photo, type Chapter, type PhotoPageData, type TextPageData } from "./layout-engine";
+import { paginate, chapterColor, NEXT_EPISODE, MARGIN_NOTES as BUILTIN_MARGIN_NOTES, type Photo, type Chapter, type PhotoPageData, type TextPageData } from "./layout-engine";
 import { MangaMark, pickMark } from "./manga-marks";
 
 // 只声明阅读器真正用到的字段,与 store 的 PostRecord 结构兼容
@@ -33,10 +33,10 @@ function formatDay(d: Date | string | null | undefined): string {
 }
 
 type Page =
-  | { kind: "cover"; cover?: Photo; color?: string }
+  | { kind: "cover"; cover?: Photo; color?: string; marginNote?: string }
   | ({ kind: "photos" } & PhotoPageData)
   | TextPageData
-  | { kind: "back"; count: number; range: string; chapters: number; notes: number };
+  | { kind: "back"; count: number; range: string; chapters: number; notes: number; marginNote?: string };
 
 /** 按上传批次分话 —— 没有时间戳时,"一起传的"就是"一件事" */
 function buildChapters(exhibits: Exhibit[]): Chapter[] {
@@ -80,6 +80,9 @@ function buildChapters(exhibits: Exhibit[]): Chapter[] {
 export default function MangaReader({ exhibits, title, description, marginNotes }: MangaReaderProps) {
   const pages = useMemo<Page[]>(() => {
     const chapters = buildChapters(exhibits);
+    // 封面/封底也带一句欄外 —— 否则首屏永远看不到这个设计
+    const pool = marginNotes?.length ? marginNotes : BUILTIN_MARGIN_NOTES;
+    const noteAt = (i: number) => pool[i % pool.length];
     const all = chapters.flatMap((c) => c.photos);
     const pics = all.filter((p) => !p.textOnly);
     const cover = pics.length
@@ -88,7 +91,7 @@ export default function MangaReader({ exhibits, title, description, marginNotes 
     const dates = all.map((p) => p.date).filter(Boolean);
 
     return [
-      { kind: "cover", cover, color: cover?.color },
+      { kind: "cover", cover, color: cover?.color, marginNote: noteAt(0) },
       ...paginate(chapters, marginNotes).map((p) => ("kind" in p ? p : { kind: "photos" as const, ...p })),
       {
         kind: "back" as const,
@@ -96,6 +99,7 @@ export default function MangaReader({ exhibits, title, description, marginNotes 
         notes: all.length - pics.length,
         chapters: chapters.length,
         range: dates.length ? `${dates[dates.length - 1]} — ${dates[0]}` : "",
+        marginNote: noteAt(1),
       },
     ];
   }, [exhibits, marginNotes]);
@@ -136,11 +140,21 @@ export default function MangaReader({ exhibits, title, description, marginNotes 
             : undefined,
         }}
       >
-        <div key={page} className="absolute inset-0 pt-4 px-4 pb-8 sm:pt-7 sm:px-7 sm:pb-9 motion-safe:animate-[pageIn_0.24s_ease-out]">
+        <div key={page} className="absolute inset-x-0 top-0 bottom-7 sm:bottom-8 pt-4 px-4 sm:pt-7 sm:px-7 motion-safe:animate-[pageIn_0.24s_ease-out]">
           {current.kind === "cover" && <CoverPage title={title} description={description} cover={current.cover} />}
           {current.kind === "photos" && <PhotoPage page={current} />}
           {current.kind === "text" && <TextPage page={current} />}
           {current.kind === "back" && <BackPage {...current} />}
+        </div>
+
+        {/* 欄外:固定在页脚带,与页内容分离 —— 不靠负偏移,不会被裁 */}
+        <div className="absolute bottom-0 inset-x-0 h-7 sm:h-8 px-4 sm:px-7 flex items-center z-30 pointer-events-none">
+          {"marginNote" in current && current.marginNote ? (
+            <span className="flex items-center gap-1.5 text-[0.62rem] sm:text-[0.7rem] font-bold opacity-60 min-w-0">
+              <span className="inline-block w-2.5 h-2.5 bg-[var(--accent)] border-2 border-[var(--ink)] shrink-0" />
+              <span className="truncate">{current.marginNote}</span>
+            </span>
+          ) : null}
         </div>
 
         <button onClick={() => turn("prev")} disabled={page === 0} className="absolute inset-y-0 left-0 w-[15%] cursor-w-resize disabled:cursor-default" aria-label="上一页" />
@@ -182,7 +196,7 @@ function CoverPage({ title, description, cover }: { title: string; description?:
 }
 
 function PhotoPage({ page }: { page: PhotoPageData }) {
-  const { tiers, chapter, sfx, focus, marginNote } = page;
+  const { tiers, chapter, sfx, focus } = page;
 
   // 整页最多一个表情符号,给主角格 —— 满页符号就成贴纸了。
   // 渲染前先定好贴在哪一格,避免在渲染过程里改状态。
@@ -276,23 +290,12 @@ function PhotoPage({ page }: { page: PhotoPageData }) {
         </span>
       )}
 
-      {marginNote && <MarginNote text={marginNote} />}
     </div>
   );
 }
 
-/** 欄外:漫画页边那行作者碎碎念 */
-function MarginNote({ text }: { text: string }) {
-  return (
-    <span className="absolute -bottom-6 left-0 right-0 z-30 text-[0.6rem] sm:text-[0.68rem] font-bold opacity-55 flex items-center gap-1.5 pointer-events-none">
-      <span className="inline-block w-2.5 h-2.5 bg-[var(--accent)] border-2 border-[var(--ink)] shrink-0" />
-      <span className="truncate">{text}</span>
-    </span>
-  );
-}
-
 function TextPage({ page }: { page: TextPageData }) {
-  const { text, chapter, variant, part, marginNote } = page;
+  const { text, chapter, variant, part } = page;
 
   return (
     <div className="h-full relative overflow-hidden">
@@ -370,7 +373,6 @@ function TextPage({ page }: { page: TextPageData }) {
         </div>
       )}
 
-      {marginNote && <MarginNote text={marginNote} />}
 
       {/* 呐喊:只有真带感叹号的短句才走这里 */}
       {variant === "shout" && (
