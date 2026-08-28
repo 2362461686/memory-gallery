@@ -27,150 +27,99 @@ function orient(ratio: number): Orientation {
   return "square";
 }
 
-/* ---------- 段式版式 ---------- */
+/* ---------- 段式版式:格子比例跟着图片走 ---------- */
+
+/**
+ * 关键算法(justified 行布局,自动相册排版的通行做法):
+ *
+ * 一段里放若干张图,让它们**等高**并排。设图片宽高比为 r1..rn,段高为 h,
+ * 则段总宽 = h·(r1+…+rn)。反过来:给定页宽 W,段高 h = W / Σr。
+ * 也就是说 —— **段高由这段放了什么图决定**,不是我拍脑袋定的权重。
+ *
+ * 这样每个格子的比例天然等于图片比例:既不用裁(不丢画面),
+ * 也不会留空白边(不散架)。竖图多的段自然高,横图多的段自然矮,
+ * 页面节奏就是这么出来的,不需要硬凑。
+ */
 
 export interface Panel {
-  /** 同段内的相对宽度 */
+  /** 横向 flex 权重 = 图片宽高比 */
   w: number;
   hero?: boolean;
-  /** 出血:顶到页面边缘不留白边 */
   bleed?: "right" | "left" | "top" | "bottom" | "full";
 }
 
 export interface Tier {
-  /** 段与段之间的相对高度 */
+  /** 纵向 flex 权重,由本段图片比例算出 */
   h: number;
   panels: Panel[];
 }
 
-export interface Template {
-  name: string;
-  tiers: Tier[];
-  fits: Orientation[];
+type Orientation2 = Orientation;
+
+/** 每段放几张:漫画一页 3-6 格,大小要有反差 —— 用「一段几张」制造反差,而不是硬掰权重 */
+function rowPlan(count: number, pageIndex: number): number[] {
+  if (count <= 1) return [1];
+  if (count === 2) return pageIndex % 2 === 0 ? [1, 1] : [2];
+  if (count === 3) return pageIndex % 2 === 0 ? [1, 2] : [2, 1];
+  if (count === 4) return pageIndex % 3 === 0 ? [1, 3] : pageIndex % 3 === 1 ? [2, 2] : [1, 2, 1];
+  if (count === 5) return pageIndex % 2 === 0 ? [2, 3] : [1, 2, 2];
+  return pageIndex % 2 === 0 ? [3, 3] : [2, 2, 2];
 }
 
-/** 版式库:每个都是真实漫画常见的段式结构 */
-const TEMPLATES: Template[] = [
-  {
-    name: "大扉",
-    fits: ["landscape", "portrait", "square"],
-    tiers: [{ h: 1, panels: [{ w: 1, hero: true, bleed: "full" }] }],
-  },
-  {
-    name: "二格·上重",
-    fits: ["landscape", "square"],
-    tiers: [
-      { h: 1.8, panels: [{ w: 1, hero: true, bleed: "top" }] },
-      { h: 1, panels: [{ w: 1 }] },
-    ],
-  },
-  {
-    name: "二格·右重",
-    fits: ["portrait"],
-    tiers: [{ h: 1, panels: [{ w: 1 }, { w: 1.5, hero: true, bleed: "right" }] }],
-  },
-  {
-    name: "上通栏·下二",
-    fits: ["landscape", "square"],
-    tiers: [
-      { h: 1.75, panels: [{ w: 1, hero: true, bleed: "top" }] },
-      { h: 1, panels: [{ w: 1.35 }, { w: 1 }] },
-    ],
-  },
-  {
-    name: "三格·竖切",
-    fits: ["portrait"],
-    tiers: [{ h: 1, panels: [{ w: 1 }, { w: 1 }, { w: 1.45, hero: true, bleed: "right" }] }],
-  },
-  {
-    name: "起承转合",
-    fits: ["landscape", "square"],
-    tiers: [
-      { h: 1.5, panels: [{ w: 1, hero: true, bleed: "top" }] },
-      { h: 1, panels: [{ w: 1 }, { w: 1.3 }] },
-      { h: 0.85, panels: [{ w: 1 }] },
-    ],
-  },
-  {
-    name: "三段·右重",
-    fits: ["portrait"],
-    tiers: [
-      { h: 1, panels: [{ w: 1 }, { w: 1.6, hero: true, bleed: "right" }] },
-      { h: 1.25, panels: [{ w: 1 }] },
-      { h: 0.9, panels: [{ w: 1 }] },
-    ],
-  },
-  {
-    name: "五格·上重",
-    fits: ["landscape", "square"],
-    tiers: [
-      { h: 1.6, panels: [{ w: 1.7, hero: true, bleed: "right" }, { w: 1 }] },
-      { h: 1, panels: [{ w: 1 }, { w: 1.2 }] },
-      { h: 0.8, panels: [{ w: 1 }] },
-    ],
-  },
-  {
-    name: "五格·竖切",
-    fits: ["portrait"],
-    tiers: [
-      { h: 1.7, panels: [{ w: 1 }, { w: 1 }, { w: 1.4, hero: true, bleed: "right" }] },
-      { h: 1, panels: [{ w: 1.3 }, { w: 1 }] },
-    ],
-  },
-  {
-    name: "六格·日常",
-    fits: ["square", "landscape", "portrait"],
-    tiers: [
-      { h: 1.35, panels: [{ w: 1 }, { w: 1.5, hero: true, bleed: "right" }] },
-      { h: 1, panels: [{ w: 1 }, { w: 1 }, { w: 1 }] },
-      { h: 0.95, panels: [{ w: 1.4 }] },
-    ],
-  },
-];
+/** 把一页的图按行计划切成段,段高由该段图片比例算出 */
+function buildTiers(group: Photo[], pageIndex: number): { tiers: Tier[]; order: Photo[] } {
+  const plan = rowPlan(group.length, pageIndex);
+  const order = [...group];
+  const tiers: Tier[] = [];
+  let k = 0;
 
-function panelCount(t: Template): number {
-  return t.tiers.reduce((n, tier) => n + tier.panels.length, 0);
+  // 先按计划分行,再算每行的相对高度
+  const rows: Photo[][] = [];
+  for (const n of plan) {
+    const row = order.slice(k, k + n);
+    if (row.length) rows.push(row);
+    k += n;
+  }
+  // 剩余的图并进最后一行,一张都不丢
+  if (k < order.length && rows.length) rows[rows.length - 1].push(...order.slice(k));
+
+  // 段高 ∝ 1 / Σ(该段图片宽高比) —— 竖图多的段自然高
+  const inverse = rows.map((row) => 1 / row.reduce((sum, p) => sum + clampRatio(p.ratio), 0));
+
+  rows.forEach((row, ri) => {
+    tiers.push({
+      h: inverse[ri],
+      panels: row.map((p, pi) => ({
+        w: clampRatio(p.ratio),
+        // 主角格:整页第一张(已按兴趣度排到最前)且该段不止一格时给它出血
+        hero: ri === 0 && pi === 0,
+        bleed: ri === 0 && pi === 0 ? (row.length === 1 ? "top" : "right") : undefined,
+      })),
+    });
+  });
+
+  return { tiers, order: rows.flat() };
 }
 
-function dominantOrientation(group: Photo[]): Orientation {
-  const counts = { portrait: 0, landscape: 0, square: 0 };
-  for (const p of group) counts[orient(p.ratio)]++;
-  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0] as Orientation;
-}
-
-/** 挑版式:格数必须匹配,再按这组图的朝向倾向选 */
-function pickTemplate(group: Photo[], pageIndex: number): Template {
-  const n = group.length;
-  if (n === 1) return TEMPLATES[0];
-
-  const dominant = dominantOrientation(group);
-  const exact = TEMPLATES.filter((t) => panelCount(t) === n);
-  const pool = exact.length ? exact : TEMPLATES.filter((t) => panelCount(t) <= n);
-  if (pool.length === 0) return TEMPLATES[0];
-
-  const fitted = pool.filter((t) => t.fits.includes(dominant));
-  const finalPool = fitted.length ? fitted : pool;
-  return finalPool[pageIndex % finalPool.length];
+/** 极端比例会把版面拉垮,收进合理区间 */
+function clampRatio(r: number): number {
+  if (!Number.isFinite(r) || r <= 0) return 4 / 3;
+  return Math.min(2.4, Math.max(0.45, r));
 }
 
 /* ---------- 分页节奏 ---------- */
 
-/** 每页格数:漫画一页 4-8 格,日常题材偏 3-5;关键是有起伏,密集页后给满版喘息 */
+/** 每页放几张:漫画一页 3-6 格,关键是有起伏 —— 密集页之后给一张满版喘息 */
 function pageSizes(total: number): number[] {
   const sizes: number[] = [];
   let left = total;
   let i = 0;
   while (left > 0) {
     let take: number;
-    if (left <= 6) {
-      take = left;
-    } else if (i % 5 === 2) {
-      take = 1;
-    } else if (i % 5 === 4) {
-      take = 6;
-    } else {
-      take = [4, 5, 3, 5][i % 4];
-    }
+    if (left <= 6) take = left;
+    else if (i % 5 === 2) take = 1;
+    else if (i % 5 === 4) take = 6;
+    else take = [4, 5, 3, 5][i % 4];
     sizes.push(Math.min(take, left));
     left -= Math.min(take, left);
     i++;
@@ -354,30 +303,24 @@ export function paginate(
       const group = pics.slice(cursor, cursor + size);
       cursor += size;
 
-      const template = pickTemplate(group, pageIdx);
-      const slots = template.tiers.flatMap((t) => t.panels);
-
-      // 主角格拿这一页里最"有内容"的那张:截图大片纯色会自动沉底
-      const heroSlot = slots.findIndex((p) => p.hero);
+      // 兴趣度最高的那张提到最前,它会落进主角格;截图大片纯色自动沉底
       const sorted = [...group];
-      if (heroSlot >= 0 && sorted.length > 1) {
+      if (sorted.length > 1) {
         const bestIdx = sorted.reduce((b, p, i) => (p.interest > sorted[b].interest ? i : b), 0);
         const [best] = sorted.splice(bestIdx, 1);
-        sorted.splice(Math.min(heroSlot, sorted.length), 0, best);
+        sorted.unshift(best);
       }
 
+      const built = buildTiers(sorted, pageIdx);
       const tiers: PlacedTier[] = [];
       let k = 0;
-      for (const tier of template.tiers) {
-        const items: PlacedPanel[] = [];
-        for (const panel of tier.panels) {
-          if (k < sorted.length) items.push({ photo: sorted[k++], panel });
-        }
+      for (const tier of built.tiers) {
+        const items: PlacedPanel[] = tier.panels.map((panel) => ({ photo: built.order[k++], panel }));
         if (items.length) tiers.push({ h: tier.h, items });
       }
 
       pages.push({
-        template: template.name,
+        template: `${tiers.map((t) => t.items.length).join("-")}`,
         tiers,
         chapter: chapter.no,
         color: chapter.color,

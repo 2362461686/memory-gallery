@@ -195,6 +195,13 @@
   overflow: hidden;
   position: relative;
 }
+/* 格子比例已按图片比例算出,所以铺满即可 —— 既不留白边也几乎不裁 */
+.manga-panel > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 /* 出血格:溢出的那一侧不描边,视觉上顶穿页面 */
 .manga-panel-bleed { border-width: 3px; }

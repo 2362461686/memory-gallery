@@ -140,22 +140,27 @@ export default function MangaReader({ exhibits, title, description, marginNotes 
             : undefined,
         }}
       >
-        <div key={page} className="absolute inset-x-0 top-0 bottom-7 sm:bottom-8 pt-4 px-4 sm:pt-7 sm:px-7 motion-safe:animate-[pageIn_0.24s_ease-out]">
+        <div key={page} className="absolute inset-x-0 top-0 bottom-8 sm:bottom-9 pt-4 px-4 sm:pt-6 sm:px-6 motion-safe:animate-[pageIn_0.24s_ease-out]">
           {current.kind === "cover" && <CoverPage title={title} description={description} cover={current.cover} />}
           {current.kind === "photos" && <PhotoPage page={current} />}
           {current.kind === "text" && <TextPage page={current} />}
           {current.kind === "back" && <BackPage {...current} />}
         </div>
 
-        {/* 欄外:固定在页脚带,与页内容分离 —— 不靠负偏移,不会被裁 */}
-        <div className="absolute bottom-0 inset-x-0 h-7 sm:h-8 px-4 sm:px-7 flex items-center z-30 pointer-events-none">
-          {"marginNote" in current && current.marginNote ? (
-            <span className="flex items-center gap-1.5 text-[0.62rem] sm:text-[0.7rem] font-bold opacity-60 min-w-0">
-              <span className="inline-block w-2.5 h-2.5 bg-[var(--accent)] border-2 border-[var(--ink)] shrink-0" />
-              <span className="truncate">{current.marginNote}</span>
+        {/* 欄外:书脚带做成实心墨条,白字反白 —— 像单行本页脚那条印刷带,不是灰色小字 */}
+        {"marginNote" in current && current.marginNote ? (
+          <div className="absolute bottom-0 inset-x-0 h-8 sm:h-9 bg-[var(--ink)] flex items-center gap-2 px-3 sm:px-5 z-30 pointer-events-none">
+            <span className="shrink-0 px-1.5 py-[1px] bg-[var(--sun)] border-2 border-[var(--paper)] text-[0.55rem] font-black text-[#17130e] tracking-wider">
+              欄外
             </span>
-          ) : null}
-        </div>
+            <span className="truncate text-[0.68rem] sm:text-[0.78rem] font-bold text-[var(--paper)] handwriting">
+              {current.marginNote}
+            </span>
+            <span className="ml-auto shrink-0 text-[0.6rem] font-black text-[var(--paper)] opacity-50 tabular-nums">
+              {page + 1}
+            </span>
+          </div>
+        ) : null}
 
         <button onClick={() => turn("prev")} disabled={page === 0} className="absolute inset-y-0 left-0 w-[15%] cursor-w-resize disabled:cursor-default" aria-label="上一页" />
         <button onClick={() => turn("next")} disabled={page === pages.length - 1} className="absolute inset-y-0 right-0 w-[15%] cursor-e-resize disabled:cursor-default" aria-label="下一页" />
@@ -245,7 +250,7 @@ function PhotoPage({ page }: { page: PhotoPageData }) {
                   style={{ flex: panel.w, ...bleedStyle }}
                 >
                   <div
-                    className={`manga-panel manga-photo-fit h-full w-full ${
+                    className={`manga-panel h-full w-full ${
                       focus && panel.hero ? "focus-lines" : ""
                     } ${bleed ? "manga-panel-bleed" : ""}`}
                     style={{
@@ -303,65 +308,62 @@ function TextPage({ page }: { page: TextPageData }) {
         第 {chapter} 话
       </span>
 
-      {/* 中扉:漫画的章节扉页规格 —— 大话数居左下、竖排标题居右、网点压底 */}
+      {/* 中扉:左窄带压网点作重心,文字区留纯净纸面 —— 字不压在点上 */}
       {variant === "tobira" && (
-        <div className="h-full relative overflow-hidden">
-          {/* 网点斜带,从左下切上来 */}
-          <div
-            className="absolute inset-0 tone-dots opacity-30"
-            style={{ clipPath: "polygon(0 42%, 100% 8%, 100% 100%, 0 100%)" }}
-          />
-          {/* 分隔墨线 */}
-          <div
-            className="absolute inset-0 border-t-[3px] border-[var(--ink)]"
-            style={{ clipPath: "polygon(0 42%, 100% 8%, 100% 10%, 0 44%)" }}
-          />
+        <div className="h-full relative flex">
+          {/* 左侧窄带:实色 + 网点,只占三分之一,不侵入文字 */}
+          <div className="relative w-[30%] sm:w-[26%] shrink-0 border-r-[3px] border-[var(--ink)] overflow-hidden">
+            <div className="absolute inset-0 tone-dots opacity-35" />
+            <div className="absolute inset-x-0 bottom-0 h-[42%] bg-[var(--accent)] border-t-[3px] border-[var(--ink)]" />
+            {/* 大话数压在色块上 */}
+            <div className="absolute left-0 right-0 bottom-3 flex flex-col items-center">
+              <span className="text-[3.4rem] sm:text-[4.6rem] font-black leading-[0.85] text-[var(--paper)] [-webkit-text-stroke:2px_var(--ink)]">
+                {chapter}
+              </span>
+              <span className="text-[0.6rem] font-black tracking-[0.4em] text-[var(--paper)] mt-0.5">
+                第 話
+              </span>
+            </div>
+          </div>
 
-          {/* 竖排标题:右上进入,占据整个右侧 */}
-          <div className="absolute top-0 right-2 bottom-0 flex items-center">
+          {/* 右侧:纯纸面,竖排标题居中 */}
+          <div className="flex-1 flex items-center justify-center px-4">
             <p
-              className="font-black leading-[1.3]"
+              className="font-black leading-[1.35]"
               style={{
                 writingMode: "vertical-rl",
                 textOrientation: "upright",
-                letterSpacing: "0.14em",
-                maxHeight: "88%",
-                fontSize: text.length <= 8 ? "3rem" : text.length <= 12 ? "2.4rem" : "1.9rem",
+                letterSpacing: "0.16em",
+                maxHeight: "84%",
+                fontSize: text.length <= 8 ? "2.8rem" : text.length <= 12 ? "2.2rem" : "1.8rem",
               }}
             >
               {text}
             </p>
-          </div>
-
-          {/* 大话数:左下,压在网点上,漫画扉页的标准位置 */}
-          <div className="absolute left-1 bottom-2 flex items-end gap-2">
-            <span className="text-[5rem] sm:text-[7rem] font-black leading-[0.8] text-[var(--accent)] [-webkit-text-stroke:2px_var(--ink)]">
-              {chapter}
-            </span>
-            <span className="text-xs font-black tracking-[0.3em] mb-3 opacity-60">话</span>
           </div>
         </div>
       )}
 
-      {/* 旁白:手写体横排,像作者在页边写的话。字号随篇幅收放,长文自动续页 */}
+      {/* 旁白:干净纸面上的手写稿,装饰只在左缘 —— 不在字底下铺网点 */}
       {variant === "narration" && (
-        <div className="h-full flex items-center justify-center px-2 sm:px-4">
-          <div className="absolute inset-x-10 inset-y-12 tone-dots opacity-15 rounded pointer-events-none" />
-          <div className="relative max-w-xl w-full">
-            <div className="h-[3px] bg-[var(--ink)] w-14 mb-4" />
+        <div className="h-full flex items-center justify-center px-3 sm:px-8">
+          {/* 左缘:装订线 + 红标记,像稿纸 */}
+          <div className="absolute left-3 sm:left-6 top-8 bottom-8 w-[3px] bg-[var(--ink)] opacity-25" />
+          <div className="absolute left-[9px] sm:left-[18px] top-10 w-2.5 h-2.5 bg-[var(--accent)] border-2 border-[var(--ink)]" />
+
+          <div className="relative max-w-xl w-full pl-5 sm:pl-8">
             <p
               className="handwriting font-bold whitespace-pre-wrap overflow-y-auto"
               style={{
-                // 短则大字,长则收小,始终把整页填得体面
-                fontSize: text.length <= 60 ? "1.5rem" : text.length <= 120 ? "1.25rem" : "1.05rem",
-                lineHeight: text.length <= 60 ? 2 : text.length <= 120 ? 1.9 : 1.8,
-                maxHeight: "62vh",
+                fontSize: text.length <= 60 ? "1.6rem" : text.length <= 120 ? "1.3rem" : "1.1rem",
+                lineHeight: text.length <= 60 ? 2.1 : text.length <= 120 ? 2 : 1.95,
+                maxHeight: "58vh",
               }}
             >
               {text}
             </p>
-            <div className="flex items-center justify-between mt-4">
-              <div className="h-[3px] bg-[var(--ink)] w-14" />
+            <div className="flex items-center justify-between mt-5">
+              <div className="h-[3px] bg-[var(--ink)] w-12" />
               {part && (
                 <span className="text-[0.65rem] font-black opacity-45 tracking-widest tabular-nums">
                   {part.index} / {part.total}
@@ -372,7 +374,6 @@ function TextPage({ page }: { page: TextPageData }) {
           </div>
         </div>
       )}
-
 
       {/* 呐喊:只有真带感叹号的短句才走这里 */}
       {variant === "shout" && (
