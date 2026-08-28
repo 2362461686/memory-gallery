@@ -179,46 +179,75 @@ function CoverPage({ title, description, cover }: { title: string; description?:
 }
 
 function PhotoPage({ page }: { page: PhotoPageData }) {
-  const { layout, items, chapter, sfx, focus } = page;
+  const { tiers, chapter, sfx, focus } = page;
+
   return (
     <div className="h-full relative">
-      <span className="absolute -top-1 right-0 z-10 text-[0.65rem] font-black opacity-35 tracking-widest">
+      {/* 书眉压在右上 —— 漫画动线的入口就在这一角 */}
+      <span className="absolute -top-2 right-0 z-30 text-[0.65rem] font-black opacity-35 tracking-widest">
         第 {chapter} 话
       </span>
 
-      <div className="h-full grid gap-3 sm:gap-4" style={{ gridTemplateColumns: layout.cols, gridTemplateRows: layout.rows }}>
-        {items.map((item, i) => {
-          const cell = layout.cells[i];
-          const tilt = i % 3 === 0 ? "-0.7deg" : i % 3 === 1 ? "0.8deg" : "-0.3deg";
-          return (
-            <figure key={i} className="relative min-h-0 min-w-0" style={{ gridArea: cell.area }}>
-              <div
-                className={`manga-photo manga-photo-fit h-full w-full ${focus && cell.hero ? "focus-lines" : ""}`}
-                style={{
-                  transform: `rotate(${tilt})`,
-                  // 图片主色垫底:留白处不是灰块,而是与画面同色的相纸底
-                  backgroundColor: item.color ? `color-mix(in srgb, ${item.color} 18%, var(--paper))` : undefined,
-                }}
-              >
-                <img src={item.url} alt={item.caption || "回忆"} loading="lazy" />
-              </div>
+      {/* 段间距 5-7mm(宽),格间距 2-4mm(窄) —— 疏密之差就是节奏 */}
+      <div className="h-full flex flex-col gap-[7px] sm:gap-[10px]">
+        {tiers.map((tier, ti) => (
+          <div
+            key={ti}
+            // row-reverse:每段从右往左读,还原漫画动线
+            className="flex flex-row-reverse gap-[4px] sm:gap-[6px] min-h-0"
+            style={{ flex: tier.h }}
+          >
+            {tier.items.map(({ photo, panel }, pi) => {
+              const bleed = panel.bleed;
+              // 出血:主角格顶到页边,不留白边
+              const bleedStyle: React.CSSProperties = {
+                marginTop: bleed === "top" || bleed === "full" ? "-1.75rem" : undefined,
+                marginRight: bleed === "right" || bleed === "full" ? "-1.75rem" : undefined,
+                marginLeft: bleed === "left" || bleed === "full" ? "-1.75rem" : undefined,
+                marginBottom: bleed === "bottom" || bleed === "full" ? "-1.75rem" : undefined,
+              };
 
-              {item.date && (
-                <span className="absolute -top-2 -left-2 manga-tag !text-[0.62rem] rotate-[-4deg]">{item.date}</span>
-              )}
+              return (
+                <figure
+                  key={pi}
+                  className="relative min-h-0 min-w-0"
+                  style={{ flex: panel.w, ...bleedStyle }}
+                >
+                  <div
+                    className={`manga-panel manga-photo-fit h-full w-full ${
+                      focus && panel.hero ? "focus-lines" : ""
+                    } ${bleed ? "manga-panel-bleed" : ""}`}
+                    style={{
+                      backgroundColor: photo.color
+                        ? `color-mix(in srgb, ${photo.color} 16%, var(--paper))`
+                        : undefined,
+                    }}
+                  >
+                    <img src={photo.url} alt={photo.caption || "回忆"} loading="lazy" />
+                  </div>
 
-              {item.caption && cell.hero && (
-                <figcaption className="absolute bottom-2 left-2 right-2 sm:right-auto sm:max-w-[70%] bg-[var(--paper)] border-[3px] border-[var(--ink)] rounded-lg px-3 py-1.5 text-[0.7rem] sm:text-xs font-bold leading-snug line-clamp-2 shadow-[3px_3px_0_var(--ink)]">
-                  {item.caption}
-                </figcaption>
-              )}
-            </figure>
-          );
-        })}
+                  {photo.date && panel.hero && (
+                    <span className="absolute top-2 right-2 z-20 manga-tag !text-[0.6rem]">
+                      {photo.date}
+                    </span>
+                  )}
+
+                  {photo.caption && panel.hero && (
+                    <figcaption className="absolute bottom-2 right-2 max-w-[75%] z-20 bg-[var(--paper)] border-[3px] border-[var(--ink)] px-3 py-1.5 text-[0.7rem] sm:text-xs font-bold leading-snug line-clamp-2 shadow-[3px_3px_0_var(--ink)]">
+                      {photo.caption}
+                    </figcaption>
+                  )}
+                </figure>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
       {sfx && (
-        <span className={`manga-sfx ${sfx.style} absolute top-[36%] -right-1 text-4xl sm:text-5xl pointer-events-none z-10`}>
+        <span
+          className={`manga-sfx ${sfx.style} absolute bottom-[14%] left-2 text-4xl sm:text-5xl pointer-events-none z-30`}
+        >
           {sfx.word}
         </span>
       )}
@@ -235,22 +264,42 @@ function TextPage({ page }: { page: TextPageData }) {
         第 {chapter} 话
       </span>
 
-      {/* 扉页:短句靠排版立住 —— 竖排大字、网点半幅、墨条压边,不套花哨的框 */}
-      {variant === "title" && (
-        <div className="h-full flex items-stretch">
-          {/* 左半:网点色块 */}
-          <div className="relative w-[38%] shrink-0 tone-dots opacity-40 border-r-[3px] border-[var(--ink)]" />
-          {/* 右半:竖排标题 */}
-          <div className="flex-1 flex items-center justify-center px-6">
+      {/* 中扉:漫画的章节扉页规格 —— 大话数居左下、竖排标题居右、网点压底 */}
+      {variant === "tobira" && (
+        <div className="h-full relative overflow-hidden">
+          {/* 网点斜带,从左下切上来 */}
+          <div
+            className="absolute inset-0 tone-dots opacity-30"
+            style={{ clipPath: "polygon(0 42%, 100% 8%, 100% 100%, 0 100%)" }}
+          />
+          {/* 分隔墨线 */}
+          <div
+            className="absolute inset-0 border-t-[3px] border-[var(--ink)]"
+            style={{ clipPath: "polygon(0 42%, 100% 8%, 100% 10%, 0 44%)" }}
+          />
+
+          {/* 竖排标题:右上进入,占据整个右侧 */}
+          <div className="absolute top-0 right-2 bottom-0 flex items-center">
             <p
-              className="font-black leading-[1.35] text-3xl sm:text-4xl"
-              style={{ writingMode: "vertical-rl", textOrientation: "upright", letterSpacing: "0.12em", maxHeight: "82%" }}
+              className="font-black leading-[1.3] text-3xl sm:text-5xl"
+              style={{
+                writingMode: "vertical-rl",
+                textOrientation: "upright",
+                letterSpacing: "0.14em",
+                maxHeight: "88%",
+              }}
             >
               {text}
             </p>
           </div>
-          {/* 压在骑缝上的墨条 */}
-          <div className="absolute left-[38%] top-8 -translate-x-1/2 w-3 h-16 bg-[var(--accent)] border-[3px] border-[var(--ink)]" />
+
+          {/* 大话数:左下,压在网点上,漫画扉页的标准位置 */}
+          <div className="absolute left-1 bottom-2 flex items-end gap-2">
+            <span className="text-[5rem] sm:text-[7rem] font-black leading-[0.8] text-[var(--accent)] [-webkit-text-stroke:2px_var(--ink)]">
+              {chapter}
+            </span>
+            <span className="text-xs font-black tracking-[0.3em] mb-3 opacity-60">话</span>
+          </div>
         </div>
       )}
 

@@ -111,7 +111,7 @@ export default function ImportPage() {
       {tab === "text" ? (
         <div className="glass-card p-6">
           <p className="text-sm font-black mb-1">没有照片的那天,也值得记一页</p>
-          <p className="text-xs opacity-55 font-bold mb-4">短句排成竖排大字扉页,长一点的做成手写旁白页;带感叹号的短句会变成呐喊。</p>
+          <p className="text-xs opacity-55 font-bold mb-4">短句做成漫画中扉(大话数+竖排标题),长一点的做成手写旁白页;带感叹号的短句会变成呐喊。</p>
           <textarea
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
@@ -126,7 +126,7 @@ export default function ImportPage() {
               {/[!!]/.test(noteText) && noteText.trim().length <= 16
                 ? "→ 呐喊"
                 : noteText.trim().length <= 16
-                  ? "→ 竖排扉页"
+                  ? "→ 中扉页"
                   : "→ 手写旁白"}
             </span>
           </div>

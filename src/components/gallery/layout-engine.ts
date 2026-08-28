@@ -1,27 +1,23 @@
 /**
- * 分镜排版引擎
+ * 分镜排版引擎 —— 按日式漫画的实际制版规范重写
  *
- * 思路来自自动相册排版的通行做法(BRIC / Automosaic 一类):
- * 版式不是写死的网格,而是按每张图的实际宽高比选择 —— 竖图给竖格、横图给横格,
- * 谁都不会被裁变形。主角格由"视觉兴趣度"决定,不是取第一张。
- *
- * 这样即使照片没有任何拍摄时间、地点信息(比如截图),版面依然有节奏。
+ * 依据:
+ * 1. 页面由 2-3 个「段」(tier)竖向堆叠,每段横向切 1-3 格、格宽不等 —— 漫画最基本的骨架
+ * 2. 格间距 2-4mm、段间距 5-7mm:窄=节奏快,宽=留白喘息
+ * 3. 每页 4-8 格且要有戏剧性大小反差;满版单格只留给最重要的一刻
+ * 4. 阅读动线右上入、左下出 —— 每段内部从右往左读
+ * 5. 主角格出血(顶到页边)才有冲击力
  */
 
 export interface Photo {
-  /** 纯文字回忆没有图 */
   url?: string;
-  /** 纯文字页:整页只放这段话 */
   textOnly?: boolean;
   caption: string;
   date: string;
   color?: string;
-  ratio: number;   // w/h,缺省按 4:3
+  ratio: number;    // w/h
   interest: number; // 0-1
 }
-
-export type Cell = { area: string; hero?: boolean };
-export type Layout = { name: string; cols: string; rows: string; cells: Cell[] };
 
 type Orientation = "portrait" | "landscape" | "square";
 
@@ -31,76 +27,175 @@ function orient(ratio: number): Orientation {
   return "square";
 }
 
-/* ---------- 版式库:按"这一组图的构成"挑,不是按顺序轮转 ---------- */
+/* ---------- 段式版式 ---------- */
 
-const L = {
-  full: { name: "满版", cols: "1fr", rows: "1fr", cells: [{ area: "1/1/2/2", hero: true }] },
+export interface Panel {
+  /** 同段内的相对宽度 */
+  w: number;
+  hero?: boolean;
+  /** 出血:顶到页面边缘不留白边 */
+  bleed?: "right" | "left" | "top" | "bottom" | "full";
+}
 
-  // 两张横图 → 上下叠
-  stackH: { name: "上下", cols: "1fr", rows: "1.4fr 1fr", cells: [{ area: "1/1/2/2", hero: true }, { area: "2/1/3/2" }] },
-  // 两张竖图 → 左右并
-  sideV: { name: "并排", cols: "1fr 1fr", rows: "1fr", cells: [{ area: "1/1/2/2", hero: true }, { area: "1/2/2/3" }] },
-  // 混合两张 → 大小对比
-  duoMix: { name: "主副", cols: "1.5fr 1fr", rows: "1fr", cells: [{ area: "1/1/2/2", hero: true }, { area: "1/2/2/3" }] },
+export interface Tier {
+  /** 段与段之间的相对高度 */
+  h: number;
+  panels: Panel[];
+}
 
-  // 三张,主图是竖的 → 左立柱
-  columnV: { name: "立柱", cols: "1.3fr 1fr", rows: "1fr 1fr", cells: [{ area: "1/1/3/2", hero: true }, { area: "1/2/2/3" }, { area: "2/2/3/3" }] },
-  // 三张,主图是横的 → 上通栏
-  bannerH: { name: "通栏", cols: "1fr 1fr", rows: "1.45fr 1fr", cells: [{ area: "1/1/2/3", hero: true }, { area: "2/1/3/2" }, { area: "2/2/3/3" }] },
-  // 三张竖图 → 三联竖切
-  tripleV: { name: "三联", cols: "1fr 1fr 1fr", rows: "1fr", cells: [{ area: "1/1/2/2", hero: true }, { area: "1/2/2/3" }, { area: "1/3/2/4" }] },
+export interface Template {
+  name: string;
+  tiers: Tier[];
+  fits: Orientation[];
+}
 
-  // 四张,主图横 → 上通栏 + 下三格
-  quadBanner: { name: "通栏三格", cols: "1fr 1fr 1fr", rows: "1.5fr 1fr", cells: [{ area: "1/1/2/4", hero: true }, { area: "2/1/3/2" }, { area: "2/2/3/3" }, { area: "2/3/3/4" }] },
-  // 四张,主图竖 → 左立柱 + 右三格
-  quadColumn: { name: "立柱三格", cols: "1.25fr 1fr", rows: "1fr 1fr 1fr", cells: [{ area: "1/1/4/2", hero: true }, { area: "1/2/2/3" }, { area: "2/2/3/3" }, { area: "3/2/4/3" }] },
-  // 四张混杂 → 田字带放大
-  quadGrid: { name: "田字", cols: "1.3fr 1fr", rows: "1.3fr 1fr", cells: [{ area: "1/1/2/2", hero: true }, { area: "1/2/2/3" }, { area: "2/1/3/2" }, { area: "2/2/3/3" }] },
-} satisfies Record<string, Layout>;
+/** 版式库:每个都是真实漫画常见的段式结构 */
+const TEMPLATES: Template[] = [
+  {
+    name: "大扉",
+    fits: ["landscape", "portrait", "square"],
+    tiers: [{ h: 1, panels: [{ w: 1, hero: true, bleed: "full" }] }],
+  },
+  {
+    name: "二格·上重",
+    fits: ["landscape", "square"],
+    tiers: [
+      { h: 1.8, panels: [{ w: 1, hero: true, bleed: "top" }] },
+      { h: 1, panels: [{ w: 1 }] },
+    ],
+  },
+  {
+    name: "二格·右重",
+    fits: ["portrait"],
+    tiers: [{ h: 1, panels: [{ w: 1 }, { w: 1.5, hero: true, bleed: "right" }] }],
+  },
+  {
+    name: "上通栏·下二",
+    fits: ["landscape", "square"],
+    tiers: [
+      { h: 1.75, panels: [{ w: 1, hero: true, bleed: "top" }] },
+      { h: 1, panels: [{ w: 1.35 }, { w: 1 }] },
+    ],
+  },
+  {
+    name: "三格·竖切",
+    fits: ["portrait"],
+    tiers: [{ h: 1, panels: [{ w: 1 }, { w: 1 }, { w: 1.45, hero: true, bleed: "right" }] }],
+  },
+  {
+    name: "起承转合",
+    fits: ["landscape", "square"],
+    tiers: [
+      { h: 1.5, panels: [{ w: 1, hero: true, bleed: "top" }] },
+      { h: 1, panels: [{ w: 1 }, { w: 1.3 }] },
+      { h: 0.85, panels: [{ w: 1 }] },
+    ],
+  },
+  {
+    name: "三段·右重",
+    fits: ["portrait"],
+    tiers: [
+      { h: 1, panels: [{ w: 1 }, { w: 1.6, hero: true, bleed: "right" }] },
+      { h: 1.25, panels: [{ w: 1 }] },
+      { h: 0.9, panels: [{ w: 1 }] },
+    ],
+  },
+  {
+    name: "五格·上重",
+    fits: ["landscape", "square"],
+    tiers: [
+      { h: 1.6, panels: [{ w: 1.7, hero: true, bleed: "right" }, { w: 1 }] },
+      { h: 1, panels: [{ w: 1 }, { w: 1.2 }] },
+      { h: 0.8, panels: [{ w: 1 }] },
+    ],
+  },
+  {
+    name: "五格·竖切",
+    fits: ["portrait"],
+    tiers: [
+      { h: 1.7, panels: [{ w: 1 }, { w: 1 }, { w: 1.4, hero: true, bleed: "right" }] },
+      { h: 1, panels: [{ w: 1.3 }, { w: 1 }] },
+    ],
+  },
+  {
+    name: "六格·日常",
+    fits: ["square", "landscape", "portrait"],
+    tiers: [
+      { h: 1.35, panels: [{ w: 1 }, { w: 1.5, hero: true, bleed: "right" }] },
+      { h: 1, panels: [{ w: 1 }, { w: 1 }, { w: 1 }] },
+      { h: 0.95, panels: [{ w: 1.4 }] },
+    ],
+  },
+];
 
-/** 按这一组图的朝向构成,挑最不糟蹋图片的版式 */
-function pickLayout(group: Photo[]): Layout {
+function panelCount(t: Template): number {
+  return t.tiers.reduce((n, tier) => n + tier.panels.length, 0);
+}
+
+function dominantOrientation(group: Photo[]): Orientation {
+  const counts = { portrait: 0, landscape: 0, square: 0 };
+  for (const p of group) counts[orient(p.ratio)]++;
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0] as Orientation;
+}
+
+/** 挑版式:格数必须匹配,再按这组图的朝向倾向选 */
+function pickTemplate(group: Photo[], pageIndex: number): Template {
   const n = group.length;
-  const heroOrient = orient(group[0].ratio);
-  const allPortrait = group.every((p) => orient(p.ratio) === "portrait");
+  if (n === 1) return TEMPLATES[0];
 
-  if (n === 1) return L.full;
-  if (n === 2) {
-    if (allPortrait) return L.sideV;
-    if (group.every((p) => orient(p.ratio) === "landscape")) return L.stackH;
-    return L.duoMix;
-  }
-  if (n === 3) {
-    if (allPortrait) return L.tripleV;
-    return heroOrient === "portrait" ? L.columnV : L.bannerH;
-  }
-  if (allPortrait) return L.quadColumn;
-  return heroOrient === "portrait" ? L.quadColumn : heroOrient === "landscape" ? L.quadBanner : L.quadGrid;
+  const dominant = dominantOrientation(group);
+  const exact = TEMPLATES.filter((t) => panelCount(t) === n);
+  const pool = exact.length ? exact : TEMPLATES.filter((t) => panelCount(t) <= n);
+  if (pool.length === 0) return TEMPLATES[0];
+
+  const fitted = pool.filter((t) => t.fits.includes(dominant));
+  const finalPool = fitted.length ? fitted : pool;
+  return finalPool[pageIndex % finalPool.length];
 }
 
-/** 每页放几张:竖图占地小可以多放,横图少放,让版面疏密有致 */
-function pageSize(remaining: Photo[], index: number): number {
-  if (remaining.length <= 4) return remaining.length;
-  const portraits = remaining.slice(0, 4).filter((p) => orient(p.ratio) === "portrait").length;
-  // 节奏:偶尔来一张满版单图当喘息,避免通篇密集
-  if (index % 4 === 2) return 1;
-  if (portraits >= 3) return 4;
-  return index % 2 === 0 ? 3 : 2;
+/* ---------- 分页节奏 ---------- */
+
+/** 每页格数:漫画一页 4-8 格,日常题材偏 3-5;关键是有起伏,密集页后给满版喘息 */
+function pageSizes(total: number): number[] {
+  const sizes: number[] = [];
+  let left = total;
+  let i = 0;
+  while (left > 0) {
+    let take: number;
+    if (left <= 6) {
+      take = left;
+    } else if (i % 5 === 2) {
+      take = 1;
+    } else if (i % 5 === 4) {
+      take = 6;
+    } else {
+      take = [4, 5, 3, 5][i % 4];
+    }
+    sizes.push(Math.min(take, left));
+    left -= Math.min(take, left);
+    i++;
+  }
+  return sizes;
 }
 
-export interface Chapter {
-  no: number;
-  photos: Photo[];
-  color?: string;
+/* ---------- 输出结构 ---------- */
+
+export interface PlacedPanel {
+  photo: Photo;
+  panel: Panel;
+}
+
+export interface PlacedTier {
+  h: number;
+  items: PlacedPanel[];
 }
 
 export interface PhotoPageData {
-  layout: Layout;
-  items: Photo[];
+  template: string;
+  tiers: PlacedTier[];
   chapter: number;
   color?: string;
   sfx?: { word: string; style: string };
-  /** 主角格加集中线,整本里稀疏出现,用于强调 */
   focus?: boolean;
 }
 
@@ -109,8 +204,13 @@ export interface TextPageData {
   text: string;
   chapter: number;
   color?: string;
-  /** 短句做大字扉页,中长句做手写旁白;感叹语气才升级成呐喊 */
-  variant: "title" | "narration" | "shout";
+  variant: "tobira" | "narration" | "shout";
+}
+
+export interface Chapter {
+  no: number;
+  photos: Photo[];
+  color?: string;
 }
 
 /** 拟声词库:词 + 表现风格 */
@@ -129,16 +229,20 @@ export const SFX_POOL = [
   { word: "咚", style: "manga-sfx-loud" },
 ] as const;
 
-/**
- * 把若干"话"排成书页。
- * 每一话内部:兴趣度最高的图升为主角格,其余按原顺序跟随。
- */
+/** 文字页形态:先看语气再看长度,呐喊只留给真正在喊的句子 */
+function pickTextVariant(text: string): "tobira" | "narration" | "shout" {
+  const t = text.trim();
+  if (/[!!]/.test(t) && t.length <= 16) return "shout";
+  if (t.length <= 16) return "tobira";
+  return "narration";
+}
+
+/** 把若干「话」排成书页 */
 export function paginate(chapters: Chapter[]): (PhotoPageData | TextPageData)[] {
   const pages: (PhotoPageData | TextPageData)[] = [];
-  let sfxCounter = 0;
+  let counter = 0;
 
   for (const chapter of chapters) {
-    // 纯文字回忆各自独占一页
     for (const note of chapter.photos.filter((p) => p.textOnly)) {
       pages.push({
         kind: "text",
@@ -149,48 +253,49 @@ export function paginate(chapters: Chapter[]): (PhotoPageData | TextPageData)[] 
       });
     }
 
-    let rest = chapter.photos.filter((p) => !p.textOnly);
-    let idx = 0;
+    const pics = chapter.photos.filter((p) => !p.textOnly);
+    let cursor = 0;
+    let pageIdx = 0;
 
-    while (rest.length > 0) {
-      const take = pageSize(rest, idx);
-      const group = rest.slice(0, take);
-      rest = rest.slice(take);
+    for (const size of pageSizes(pics.length)) {
+      const group = pics.slice(cursor, cursor + size);
+      cursor += size;
 
-      // 主角格给这一页里最"有内容"的那张 —— 截图大片纯色会自动沉底
-      const heroIdx = group.reduce((best, p, i) => (p.interest > group[best].interest ? i : best), 0);
-      if (heroIdx > 0) {
-        const [hero] = group.splice(heroIdx, 1);
-        group.unshift(hero);
+      const template = pickTemplate(group, pageIdx);
+      const slots = template.tiers.flatMap((t) => t.panels);
+
+      // 主角格拿这一页里最"有内容"的那张:截图大片纯色会自动沉底
+      const heroSlot = slots.findIndex((p) => p.hero);
+      const sorted = [...group];
+      if (heroSlot >= 0 && sorted.length > 1) {
+        const bestIdx = sorted.reduce((b, p, i) => (p.interest > sorted[b].interest ? i : b), 0);
+        const [best] = sorted.splice(bestIdx, 1);
+        sorted.splice(Math.min(heroSlot, sorted.length), 0, best);
+      }
+
+      const tiers: PlacedTier[] = [];
+      let k = 0;
+      for (const tier of template.tiers) {
+        const items: PlacedPanel[] = [];
+        for (const panel of tier.panels) {
+          if (k < sorted.length) items.push({ photo: sorted[k++], panel });
+        }
+        if (items.length) tiers.push({ h: tier.h, items });
       }
 
       pages.push({
-        layout: pickLayout(group),
-        items: group,
+        template: template.name,
+        tiers,
         chapter: chapter.no,
         color: chapter.color,
-        // 拟声词稀疏投放:满页都是就成噪音
-        sfx: sfxCounter % 3 === 1 ? SFX_POOL[sfxCounter % SFX_POOL.length] : undefined,
-        // 集中线更稀疏,每 5 页一次强调
-        focus: sfxCounter % 5 === 3,
+        sfx: counter % 3 === 1 ? SFX_POOL[counter % SFX_POOL.length] : undefined,
+        focus: counter % 5 === 3,
       });
-      idx++;
-      sfxCounter++;
+      pageIdx++;
+      counter++;
     }
   }
   return pages;
-}
-
-/**
- * 文字页形态:先看语气,再看长度。
- * 呐喊框只留给真正在喊的句子 —— 平静的短句配爆炸框会很荒唐。
- */
-function pickTextVariant(text: string): "title" | "narration" | "shout" {
-  const t = text.trim();
-  const exclaims = (t.match(/[!!]/g) || []).length;
-  if (exclaims >= 1 && t.length <= 16) return "shout";
-  if (t.length <= 16) return "title";
-  return "narration";
 }
 
 /** 一话的色调:取这话里兴趣度最高那张的主色 */
