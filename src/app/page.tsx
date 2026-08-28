@@ -85,10 +85,10 @@ export default function Home() {
                 className="manga-panel relative flex flex-col items-center justify-center text-center px-4 py-6"
                 style={{ "--drop-tilt": "1.2deg", gridArea: "3 / 1 / 4 / 3" } as React.CSSProperties}
               >
-                <h1 className="text-2xl sm:text-4xl font-black leading-[1.08] mb-3">
+                <h1 className="title-logo text-3xl sm:text-5xl leading-[1.06] mb-4">
                   把这些日子
                   <br />
-                  <span className="text-[var(--accent)]">画成一本</span>
+                  画成一本
                 </h1>
                 <Link href="/register" className="manga-btn manga-btn-accent !py-2 !px-6 text-sm">
                   开始我的第一话 →
@@ -116,7 +116,7 @@ export default function Home() {
 
       <section className="max-w-2xl mx-auto pb-28">
         <div className="panel-in">
-          <p className="text-lg sm:text-xl font-bold leading-[1.9]">
+          <p className="display text-xl sm:text-2xl leading-[1.85]">
             照片躺在相册里，就只是文件。
             <br />
             <span className="text-[var(--accent)]">排进格子里，它们才是你的连载。</span>
@@ -133,11 +133,11 @@ export default function Home() {
             ["装订成卷", "挑内容、排顺序、选封面、起名字。发给谁看，随时能撤回。"],
           ].map(([title, desc], i) => (
             <li key={title} className="panel-in toc-row flex items-baseline gap-5">
-              <span className="shrink-0 text-2xl sm:text-3xl font-black tabular-nums opacity-25">
+              <span className="display shrink-0 text-3xl sm:text-4xl tabular-nums opacity-25">
                 {String(i + 1).padStart(2, "0")}
               </span>
               <div className="min-w-0">
-                <h2 className="text-lg sm:text-xl font-black mb-1">{title}</h2>
+                <h2 className="display text-xl sm:text-2xl mb-1">{title}</h2>
                 <p className="text-sm opacity-65 leading-relaxed font-bold">{desc}</p>
               </div>
             </li>

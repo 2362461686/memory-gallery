@@ -65,7 +65,7 @@ export default async function DashboardPage() {
             <div className="grid sm:grid-cols-[1fr_auto]">
               <div className="p-6 sm:p-8 min-w-0">
                 <span className="manga-tag manga-tag-accent rotate-[-3deg] inline-block mb-4">连载中</span>
-                <h1 className="text-3xl sm:text-4xl font-black leading-[1.1] mb-3" style={{ textWrap: "balance" }}>
+                <h1 className="display text-4xl sm:text-5xl leading-[1.08] mb-3" style={{ textWrap: "balance" }}>
                   {userName} 的回忆录
                 </h1>
                 {lead && (
@@ -105,7 +105,7 @@ export default async function DashboardPage() {
           {exhibitions.length > 0 && (
             <section className="mb-12">
               <div className="manga-heading mb-5">
-                <h2 className="text-lg font-black">书架</h2>
+                <h2 className="display text-xl">书架</h2>
                 <span className="manga-tag">{exhibitions.length} 卷</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -144,7 +144,7 @@ export default async function DashboardPage() {
           {timeline.length > 0 && (
             <section>
               <div className="manga-heading mb-1">
-                <h2 className="text-lg font-black">目录</h2>
+                <h2 className="display text-xl">目录</h2>
                 <span className="manga-tag manga-tag-sky">全 {timeline.length} 话</span>
               </div>
               <div className="border-t-[3px] border-[var(--ink)] mt-4">
@@ -156,7 +156,7 @@ export default async function DashboardPage() {
                         {/* 话数:目录页的主角 */}
                         <div className="shrink-0 w-14 text-center">
                           <div
-                            className="text-2xl sm:text-3xl font-black leading-none tabular-nums"
+                            className="display text-3xl sm:text-4xl leading-none tabular-nums"
                             style={{ color: entry.color || "var(--accent)" }}
                           >
                             {String(no).padStart(2, "0")}
@@ -220,7 +220,7 @@ function EmptyState() {
       <div className="masthead max-w-lg mx-auto speed-lines fx-speed">
         <div className="p-8 sm:p-12 text-center">
           <span className="manga-tag manga-tag-sky rotate-[-3deg] inline-block mb-5">第 0 话</span>
-          <h1 className="text-3xl sm:text-4xl font-black leading-tight mb-4">故事还没开始</h1>
+          <h1 className="title-logo text-4xl sm:text-5xl leading-tight mb-5">故事还没开始</h1>
           <p className="handwriting text-base opacity-70 font-bold mb-8 leading-relaxed">
             把最近拍的照片传上来，<br />你的第一话就画好了。
             <br />

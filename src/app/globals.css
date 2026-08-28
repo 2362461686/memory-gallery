@@ -338,10 +338,36 @@
   background-size: 6px 6px;
 }
 
-/* ---------- 手写体标题(卷首/旁白) ---------- */
+/* ---------- 手写体(卷首/旁白/欄外) ---------- */
+/* 原来指定的 Xingkai SC 只有 macOS 有,在 Linux/Windows 上静默退回宋体 ——
+   等于这个效果在多数机器上从未生效。改用打包进项目的马善政毛笔楷书。 */
 
 .handwriting {
-  font-family: 'Xingkai SC', 'STXingkai', 'Kaiti SC', 'KaiTi', var(--font-serif);
+  font-family: var(--font-hand), 'Xingkai SC', 'Kaiti SC', var(--font-serif);
+  letter-spacing: 0.04em;
+}
+
+/* ---------- 标题字:漫画标题的重量 ---------- */
+/* 站酷庆科黄油体,粗壮扁方、有海报冲击力。只给标题用,正文继续用明朝体。 */
+
+.display {
+  font-family: var(--font-display), var(--font-serif);
+  font-weight: 400;   /* 这个字体只有一个字重,它本身就很粗 */
+  letter-spacing: 0.02em;
+}
+
+/* 漫画标题 logo:主色字 + 反白描边 + 墨色硬投影,像印在封面上的标题 */
+.title-logo {
+  font-family: var(--font-display), var(--font-serif);
+  font-weight: 400;
+  color: var(--accent);
+  -webkit-text-stroke: 2px var(--paper);
+  paint-order: stroke fill;
+  text-shadow:
+     3px 3px 0 var(--ink),
+     -1px -1px 0 var(--ink),
+     1px -1px 0 var(--ink),
+     -1px 1px 0 var(--ink);
   letter-spacing: 0.03em;
 }
 

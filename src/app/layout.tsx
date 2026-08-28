@@ -1,17 +1,35 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/jwt";
-import { Noto_Serif_SC } from "next/font/google";
+import { Noto_Serif_SC, ZCOOL_QingKe_HuangYou, Ma_Shan_Zheng } from "next/font/google";
 import Link from "next/link";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import NavMenu from "@/components/NavMenu";
 import ClickEffect from "@/components/ClickEffect";
 import "./globals.css";
 
+// 三角色字体系统:
+// display = 站酷庆科黄油体,粗壮扁方,漫画标题的重量
+// hand    = 马善政毛笔楷书,真毛笔手写(原来的 Xingkai SC 只有 macOS 有,在别的系统上根本没生效)
+// body    = Noto Serif SC,明朝体是日漫正文的惯例
 const notoSerif = Noto_Serif_SC({
   subsets: ["latin"],
   weight: ["400", "700", "900"],
   variable: "--font-serif",
+  display: "swap",
+});
+
+const zcool = ZCOOL_QingKe_HuangYou({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-display",
+  display: "swap",
+});
+
+const maShan = Ma_Shan_Zheng({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-hand",
   display: "swap",
 });
 
@@ -43,7 +61,7 @@ export default async function RootLayout({
   const user = await getUser();
 
   return (
-    <html lang="zh-CN" className={`${notoSerif.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="zh-CN" className={`${notoSerif.variable} ${zcool.variable} ${maShan.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         {/* 水合前定妥主题,避免刷新时纸白/夜刊闪一下 */}
         <script
