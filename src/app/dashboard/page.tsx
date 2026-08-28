@@ -58,7 +58,7 @@ export default async function DashboardPage() {
           <div className="glass-card inline-block px-12 py-10 rotate-[-0.5deg]">
             <span className="manga-tag manga-tag-sky mb-4 inline-block">第 0 话</span>
             <h2 className="text-lg font-black mb-2">故事还没开始</h2>
-            <p className="text-sm opacity-60 mb-6 max-w-xs mx-auto font-bold">把最近拍的照片传上来,你的第一话就画好了</p>
+            <p className="text-sm opacity-60 mb-6 max-w-xs mx-auto font-bold">把最近拍的照片传上来,你的第一话就画好了。<br/>截图也算 —— 它也是回忆的一种。</p>
             <Link href="/import" className="manga-btn manga-btn-accent">
               <IconPlus size={16} />画下第一格
             </Link>

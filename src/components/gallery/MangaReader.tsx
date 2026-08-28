@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { paginate, chapterColor, type Photo, type Chapter, type PhotoPageData, type TextPageData } from "./layout-engine";
+import { paginate, chapterColor, NEXT_EPISODE, type Photo, type Chapter, type PhotoPageData, type TextPageData } from "./layout-engine";
+import { MangaMark, pickMark } from "./manga-marks";
 
 // 只声明阅读器真正用到的字段,与 store 的 PostRecord 结构兼容
 interface Exhibit {
@@ -133,7 +134,7 @@ export default function MangaReader({ exhibits, title, description }: MangaReade
             : undefined,
         }}
       >
-        <div key={page} className="absolute inset-0 p-4 sm:p-7 motion-safe:animate-[pageIn_0.24s_ease-out]">
+        <div key={page} className="absolute inset-0 pt-4 px-4 pb-8 sm:pt-7 sm:px-7 sm:pb-9 motion-safe:animate-[pageIn_0.24s_ease-out]">
           {current.kind === "cover" && <CoverPage title={title} description={description} cover={current.cover} />}
           {current.kind === "photos" && <PhotoPage page={current} />}
           {current.kind === "text" && <TextPage page={current} />}
@@ -179,7 +180,21 @@ function CoverPage({ title, description, cover }: { title: string; description?:
 }
 
 function PhotoPage({ page }: { page: PhotoPageData }) {
-  const { tiers, chapter, sfx, focus } = page;
+  const { tiers, chapter, sfx, focus, marginNote } = page;
+
+  // 整页最多一个表情符号,给主角格 —— 满页符号就成贴纸了。
+  // 渲染前先定好贴在哪一格,避免在渲染过程里改状态。
+  const markTarget = (() => {
+    for (let ti = 0; ti < tiers.length; ti++) {
+      for (let pi = 0; pi < tiers[ti].items.length; pi++) {
+        const { photo, panel } = tiers[ti].items[pi];
+        if (!panel.hero) continue;
+        const kind = pickMark(photo.interest, photo.ratio);
+        if (kind) return { ti, pi, kind };
+      }
+    }
+    return null;
+  })();
 
   return (
     <div className="h-full relative">
@@ -226,6 +241,13 @@ function PhotoPage({ page }: { page: PhotoPageData }) {
                     <img src={photo.url} alt={photo.caption || "回忆"} loading="lazy" />
                   </div>
 
+                  {markTarget?.ti === ti && markTarget?.pi === pi && (
+                    <MangaMark
+                      kind={markTarget.kind}
+                      className="absolute -top-3 -left-3 w-8 h-8 sm:w-10 sm:h-10 z-30 drop-shadow-[2px_2px_0_var(--paper)]"
+                    />
+                  )}
+
                   {photo.date && panel.hero && (
                     <span className="absolute top-2 right-2 z-20 manga-tag !text-[0.6rem]">
                       {photo.date}
@@ -246,17 +268,29 @@ function PhotoPage({ page }: { page: PhotoPageData }) {
 
       {sfx && (
         <span
-          className={`manga-sfx ${sfx.style} absolute bottom-[14%] left-2 text-4xl sm:text-5xl pointer-events-none z-30`}
+          className={`manga-sfx ${sfx.style} absolute bottom-[16%] left-2 text-4xl sm:text-5xl pointer-events-none z-30`}
         >
           {sfx.word}
         </span>
       )}
+
+      {marginNote && <MarginNote text={marginNote} />}
     </div>
   );
 }
 
+/** 欄外:漫画页边那行作者碎碎念 */
+function MarginNote({ text }: { text: string }) {
+  return (
+    <span className="absolute -bottom-6 left-0 right-0 z-30 text-[0.6rem] sm:text-[0.68rem] font-bold opacity-55 flex items-center gap-1.5 pointer-events-none">
+      <span className="inline-block w-2.5 h-2.5 bg-[var(--accent)] border-2 border-[var(--ink)] shrink-0" />
+      <span className="truncate">{text}</span>
+    </span>
+  );
+}
+
 function TextPage({ page }: { page: TextPageData }) {
-  const { text, chapter, variant, part } = page;
+  const { text, chapter, variant, part, marginNote } = page;
 
   return (
     <div className="h-full relative overflow-hidden">
@@ -334,6 +368,8 @@ function TextPage({ page }: { page: TextPageData }) {
         </div>
       )}
 
+      {marginNote && <MarginNote text={marginNote} />}
+
       {/* 呐喊:只有真带感叹号的短句才走这里 */}
       {variant === "shout" && (
         <div className="h-full flex items-center justify-center relative">
@@ -354,6 +390,9 @@ function BackPage({ count, range, chapters, notes }: { count: number; range: str
       <p className="text-sm font-black">全 {chapters} 话 · {count} 张回忆{notes > 0 ? ` · ${notes} 段手记` : ""}</p>
       {range && <p className="text-xs font-bold opacity-50">{range}</p>}
       <span className="manga-tag manga-tag-sky mt-1 rotate-[-2deg]">未完待续</span>
+      <p className="text-[0.7rem] font-bold opacity-50 mt-2 handwriting text-base">
+        {NEXT_EPISODE[chapters % NEXT_EPISODE.length]}
+      </p>
     </div>
   );
 }

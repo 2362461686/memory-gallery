@@ -197,6 +197,8 @@ export interface PhotoPageData {
   color?: string;
   sfx?: { word: string; style: string };
   focus?: boolean;
+  /** 页边作者吐槽 */
+  marginNote?: string;
 }
 
 export interface TextPageData {
@@ -207,6 +209,7 @@ export interface TextPageData {
   variant: "tobira" | "narration" | "shout";
   /** 长文分页时的页序,单页为 undefined */
   part?: { index: number; total: number };
+  marginNote?: string;
 }
 
 /** 一页旁白的容量上限:超过就分页,不截断 */
@@ -274,6 +277,39 @@ export const SFX_POOL = [
   { word: "咚", style: "manga-sfx-loud" },
 ] as const;
 
+/**
+ * 欄外吐槽:漫画页边那行作者碎碎念,是梗的正确归宿。
+ * 分镜格里保持干净,俏皮话都收在这条窄边上 —— 想看的会看,不看也不碍事。
+ */
+export const MARGIN_NOTES = [
+  "这张的活人感,拉满了",
+  "谷子可以断,回忆不能断",
+  "存图一时爽,一直存图一直爽",
+  "翻到这页的你,今天也辛苦了",
+  "画面很好,可惜当时没吃饱",
+  "此处应有 BGM",
+  "编辑说这张要放大,我照做了",
+  "情绪价值,由这一格提供",
+  "作者本人当时并不知道会被存进回忆录",
+  "这一格,我磨了很久",
+  "如果这页让你破防了,那就对了",
+  "下次一定拍横的",
+  "敬当时的自己一杯",
+  "本页无台词,请自行脑补",
+  "痛,但值得留着",
+  "截图也是回忆的一种,别嫌弃它",
+  "翻页的手,请轻一点",
+  "第 N 次翻到这里了吧",
+] as const;
+
+/** 封底的下回预告,漫画惯例 */
+export const NEXT_EPISODE = [
+  "下一话:还没发生的那些日子",
+  "下一话:你还没拍下的那张照片",
+  "下一话:未定 —— 因为还没过完",
+  "下一话:等你回来继续画",
+] as const;
+
 /** 文字页形态:先看语气再看长度,呐喊只留给真正在喊的句子 */
 function pickTextVariant(text: string): "tobira" | "narration" | "shout" {
   const t = text.trim();
@@ -300,6 +336,7 @@ export function paginate(chapters: Chapter[]): (PhotoPageData | TextPageData)[] 
           color: chapter.color,
           variant,
           part: parts.length > 1 ? { index: i + 1, total: parts.length } : undefined,
+          marginNote: i === parts.length - 1 ? MARGIN_NOTES[(chapter.no + i) % MARGIN_NOTES.length] : undefined,
         });
       });
     }
@@ -341,6 +378,8 @@ export function paginate(chapters: Chapter[]): (PhotoPageData | TextPageData)[] 
         color: chapter.color,
         sfx: counter % 3 === 1 ? SFX_POOL[counter % SFX_POOL.length] : undefined,
         focus: counter % 5 === 3,
+        // 每两页一条页边吐槽,不是每页都有 —— 话密了就不好笑了
+        marginNote: counter % 2 === 0 ? MARGIN_NOTES[counter % MARGIN_NOTES.length] : undefined,
       });
       pageIdx++;
       counter++;

@@ -28,7 +28,7 @@ export default function ImportPage() {
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error);
-      setMessage("记下了,即将跳转…");
+      setMessage("记下了 —— 敬当时的你一杯。");
       setTimeout(() => router.push("/dashboard"), 1000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "保存失败");
@@ -63,7 +63,7 @@ export default function ImportPage() {
       const failNote = d.failed?.length
         ? `,${d.failed.length} 张失败(${d.failed.map((f: { name: string; reason: string }) => `${f.name}: ${f.reason}`).join("、")})`
         : "";
-      setMessage(`咔嚓!收下了 ${d.count} 张回忆${failNote},即将跳转…`);
+      setMessage(`咔嚓!收下了 ${d.count} 张回忆${failNote} —— 这一话的活人感,稳了。`);
       setTimeout(() => router.push("/dashboard"), d.failed?.length ? 3000 : 1200);
     } catch (err) {
       setError(err instanceof Error ? err.message : "上传失败");
@@ -116,7 +116,8 @@ export default function ImportPage() {
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
             rows={8}
-            placeholder="例:今天什么都没发生,但下班路上的晚霞很好看。"
+            placeholder="例:今天什么都没发生,但下班路上的晚霞很好看。
+(写多长都行,长了会自动续页)"
             className="w-full px-4 py-3 bg-[var(--paper)] border-[3px] border-[var(--ink)] rounded-lg text-sm font-bold leading-relaxed resize-none placeholder:opacity-40 placeholder:font-normal focus:outline-none focus:shadow-[3px_3px_0_var(--accent)] transition-shadow"
           />
           <div className="flex justify-between items-center mt-2">
