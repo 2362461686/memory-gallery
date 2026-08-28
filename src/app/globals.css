@@ -623,6 +623,26 @@
     to { stroke-dashoffset: 0; }
   }
 
+  /* 角色描完之后,镜头微微推近 —— 演出的收束 */
+  .cast-in {
+    animation: castIn 1.1s ease-out forwards;
+    opacity: 0;
+  }
+  @keyframes castIn {
+    from { opacity: 0; }
+    40%  { opacity: 1; }
+    to   { opacity: 1; }
+  }
+
+  /* 全部描完后,整页极缓推近 —— 像镜头还在走 */
+  .stage-push {
+    animation: stagePush 12s ease-out 2.4s forwards;
+  }
+  @keyframes stagePush {
+    from { transform: scale(1); }
+    to   { transform: scale(1.018); }
+  }
+
   /* 落地那一下的震 —— 整页轻微一顿 */
   .assemble-quake {
     animation: assembleQuake 1.5s ease-out 0.92s;
