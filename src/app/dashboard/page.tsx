@@ -4,6 +4,7 @@ import { findExhibitionsByUser, getExhibitionPostCounts, findUserById, findPosts
 import Link from "next/link";
 import { IconPlus, IconGallery, IconMapPin } from "@/lib/icons";
 import BindButton from "@/components/BindButton";
+import { mediaSrc } from "@/lib/media";
 
 interface Episode {
   label: string;
@@ -92,7 +93,7 @@ export default async function DashboardPage() {
               {/* 右侧:最近一话的封面照压边,像期刊封面 */}
               {latest?.photos[0] && (
                 <div className="fx-kenburns hidden sm:block relative w-52 border-l-[3px] border-[var(--ink)] overflow-hidden">
-                  <img src={latest.photos[0]} alt="" className="w-full h-full object-cover" />
+                  <img src={mediaSrc(latest.photos[0])} alt="" className="w-full h-full object-cover" />
                   <span className="absolute bottom-3 left-3 manga-tag !text-[0.62rem]">
                     第 {timeline.length} 话
                   </span>
@@ -118,7 +119,7 @@ export default async function DashboardPage() {
                       <div className="pl-6">
                         <div className="relative h-36 border-b-[3px] border-[var(--ink)] bg-[color-mix(in_srgb,var(--sky)_22%,var(--paper))] flex items-center justify-center overflow-hidden">
                           {ex.coverImage ? (
-                            <img src={ex.coverImage} alt="" className="w-full h-full object-cover" />
+                            <img src={mediaSrc(ex.coverImage)} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <IconGallery className="opacity-25" size={36} />
                           )}
@@ -190,7 +191,7 @@ export default async function DashboardPage() {
                                   key={j}
                                   className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 border-[3px] border-[var(--ink)] rounded-sm overflow-hidden"
                                 >
-                                  <img src={url} alt="" loading="lazy" className="w-full h-full object-cover" />
+                                  <img src={mediaSrc(url)} alt="" loading="lazy" className="w-full h-full object-cover" />
                                 </div>
                               ))}
                               {entry.photos.length > 6 && (

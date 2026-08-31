@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import MangaReader from "@/components/gallery/MangaReader";
+import { mediaSrc } from "@/lib/media";
 
 interface SharePageProps {
   params: Promise<{ token: string }>;
@@ -20,7 +21,8 @@ export async function generateMetadata({ params }: SharePageProps): Promise<Meta
     openGraph: {
       title: ex.title,
       description: ex.description || "",
-      images: ex.coverImage ? [ex.coverImage] : [],
+      // 抓 OG 图的爬虫没有 cookie,只有「公开且未过期」的册子才取得到,正合适
+      images: ex.coverImage ? [mediaSrc(ex.coverImage, token)!] : [],
     },
   };
 }
@@ -89,6 +91,7 @@ export default async function SharePage({ params }: SharePageProps) {
             title={exhibition.title}
             description={exhibition.description}
             marginNotes={marginNotes}
+            shareToken={token}
           />
         ) : (
           <div className="max-w-md mx-auto text-center glass-card p-10">

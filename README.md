@@ -26,11 +26,22 @@ npm run dev                              # http://localhost:3000
 
 `DEEPSEEK_API_KEY` 选填。不配也能用:装订会自动降级为按日期/地点起名。
 
+**从 0.x 升上来的**,照片还留在 `public/uploads/` 里,跑一次搬迁:
+
+```bash
+npm run migrate:uploads                  # public/uploads → data/uploads
+```
+
+没跑也不会裂图 —— 单张图第一次被访问时会自动搬走;但没被访问过的那些还留在
+公开目录里,所以升级后应当跑一次。
+
 ## 技术栈
 
-Next.js 16 App Router · React 19 · Tailwind 4 · three.js(3D 翻阅回忆集)· exifr(EXIF)· heic-convert(HEIC 转码)· 文件型 JSON 存储(个人部署够用)
+Next.js 16 App Router · React 19 · Tailwind 4 · exifr(EXIF)· heic-convert(HEIC 转码)· 文件型 JSON 存储(个人部署够用)
 
 ## 已知边界
 
-- 数据存 `data/db.json`、图片存 `public/uploads/`,单机部署方案;上 Serverless 平台需改造存储
+- 数据存 `data/db.json`、图片存 `data/uploads/`,单机部署方案;上 Serverless 平台需改造存储
+- 照片不在 `public/` 下,一律经 `/api/media/...` 鉴权取图:必须是本人,或持有效分享链接
+  (撤销/过期/密码在图片这一层同样生效)。分享链接只授权那一本册子里的照片
 - 曾有的 QQ 空间 Cookie 导入已移除:接口非官方、防盗链、Cookie 随时失效,不值得用户折腾

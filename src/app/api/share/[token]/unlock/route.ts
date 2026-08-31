@@ -20,10 +20,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
   if (!ok) return NextResponse.json({ error: "密码不对" }, { status: 401 });
 
   const store = await cookies();
+  // path 必须是 "/":图片走 /api/share/<token>/media/...,cookie 挂在 /share/<token>
+  // 下的话那条路由收不到,解了锁照样是一页裂图。名字里已经带 token,不会串本。
   store.set(`share_${token}`, "1", {
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    path: `/share/${token}`,
+    path: "/",
     maxAge: 60 * 60 * 12,
   });
 

@@ -4,6 +4,7 @@ import { findPostsByUser } from "@/lib/store";
 import Link from "next/link";
 import { IconArrowLeft, IconPlus } from "@/lib/icons";
 import BindPreview from "./BindPreview";
+import { mediaSrc } from "@/lib/media";
 
 export default async function BindPage() {
   const session = await getSession();
@@ -18,7 +19,7 @@ export default async function BindPage() {
     } catch { /* 老数据可能有坏 JSON */ }
     return {
       id: p.id,
-      url: urls[0],
+      url: mediaSrc(urls[0]),
       isText: p.contentType === "text" || urls.length === 0,
       text: p.contentText || "",
       date: p.postedAt

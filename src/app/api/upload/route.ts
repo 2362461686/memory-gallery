@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helpers";
 import { createPost } from "@/lib/store";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile } from "fs/promises";
 import path from "path";
 import exifr from "exifr";
 import { extractFeatures } from "@/lib/image-features";
+import { UPLOAD_DIR, ensureUploadDir } from "@/lib/media-server";
 
 // 扩展名白名单:防止 .html/.svg 之类落进 /uploads 变成存储型 XSS
 const ALLOWED_EXT = new Set(["jpg", "jpeg", "png", "gif", "webp", "heic", "heif"]);
@@ -75,8 +76,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(uploadDir, { recursive: true });
+    // 落盘位置在 data/ 而非 public/ —— public 下的东西 Next 会无条件公开,
+    // 别人的照片不该是「知道文件名就能下」。取图一律走 /api/media 鉴权路由。
+    await ensureUploadDir();
 
     const posts = [];
     const failed: { name: string; reason: string }[] = [];
@@ -128,7 +130,7 @@ export async function POST(request: Request) {
         } catch { /* EXIF parse failures are non-critical */ }
 
         const filename = `${crypto.randomUUID()}.${outExt}`;
-        await writeFile(path.join(uploadDir, filename), buffer);
+        await writeFile(path.join(UPLOAD_DIR, filename), buffer);
 
         // 从图片本身提取排版信号,用户无需交代任何信息
         const features = await extractFeatures(buffer);

@@ -151,6 +151,34 @@ export function findPostsByIds(ids: string[]) {
   return readDB().posts.filter((p) => ids.includes(p.id));
 }
 
+function mediaListOf(post: PostRecord): string[] {
+  try {
+    const urls = JSON.parse(post.mediaUrls);
+    return Array.isArray(urls) ? urls : [];
+  } catch {
+    return []; // 老数据里可能有坏 JSON
+  }
+}
+
+/** 这张图是不是他自己的 —— 鉴权下载路由唯一的判据 */
+export function userOwnsMedia(userId: string, url: string): boolean {
+  return readDB().posts.some((p) => p.userId === userId && mediaListOf(p).includes(url));
+}
+
+/**
+ * 这张图是不是这本册子里的。
+ * 分享链接只授权「这一本」,不能拿它当令牌去取作者其它照片。
+ */
+export function exhibitionHasMedia(exhibitionId: string, url: string): boolean {
+  const db = readDB();
+  // 只认成员关系。不给 coverImage 开后门 —— 老数据里出现过封面指向册外照片的情况,
+  // 那时候「是封面」就成了绕过成员判定的口子
+  const postIds = new Set(
+    db.exhibitionPosts.filter((ep) => ep.exhibitionId === exhibitionId).map((ep) => ep.postId)
+  );
+  return db.posts.some((p) => postIds.has(p.id) && mediaListOf(p).includes(url));
+}
+
 // --- Exhibitions ---
 
 export function createExhibition(data: Omit<ExhibitionRecord, "id" | "createdAt" | "updatedAt">) {

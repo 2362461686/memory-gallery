@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { paginate, chapterColor, NEXT_EPISODE, MARGIN_NOTES as BUILTIN_MARGIN_NOTES, type Photo, type Chapter, type PhotoPageData, type TextPageData } from "./layout-engine";
 import { MangaMark, pickMark } from "./manga-marks";
+import { mediaSrc } from "@/lib/media";
 
 // 只声明阅读器真正用到的字段,与 store 的 PostRecord 结构兼容
 interface Exhibit {
@@ -24,6 +25,8 @@ interface MangaReaderProps {
   description?: string | null;
   /** 用户自定义的页边吐槽,不传则用内置 */
   marginNotes?: string[];
+  /** 分享页传它 —— 收到链接的人没有账号,取图要走分享通道 */
+  shareToken?: string;
 }
 
 function formatDay(d: Date | string | null | undefined): string {
@@ -40,7 +43,7 @@ type Page =
   | { kind: "back"; count: number; range: string; chapters: number; notes: number; marginNote?: string };
 
 /** 按上传批次分话 —— 没有时间戳时,"一起传的"就是"一件事" */
-function buildChapters(exhibits: Exhibit[]): Chapter[] {
+function buildChapters(exhibits: Exhibit[], shareToken?: string): Chapter[] {
   const groups = new Map<string, Photo[]>();
   const order: string[] = [];
 
@@ -62,7 +65,7 @@ function buildChapters(exhibits: Exhibit[]): Chapter[] {
     }
     for (const url of urls) {
       groups.get(key)!.push({
-        url,
+        url: mediaSrc(url, shareToken),
         caption,
         date: formatDay(ex.postedAt),
         place: ex.location || undefined,
@@ -79,9 +82,9 @@ function buildChapters(exhibits: Exhibit[]): Chapter[] {
     .map((photos, i) => ({ no: i + 1, photos, color: chapterColor(photos) }));
 }
 
-export default function MangaReader({ exhibits, title, description, marginNotes }: MangaReaderProps) {
+export default function MangaReader({ exhibits, title, description, marginNotes, shareToken }: MangaReaderProps) {
   const pages = useMemo<Page[]>(() => {
-    const chapters = buildChapters(exhibits);
+    const chapters = buildChapters(exhibits, shareToken);
     // 封面/封底也带一句欄外 —— 否则首屏永远看不到这个设计
     // marginNotes 传了空数组 = 用户主动关闭;undefined = 没配置过,用内置
     const off = marginNotes !== undefined && marginNotes.length === 0;
@@ -106,7 +109,7 @@ export default function MangaReader({ exhibits, title, description, marginNotes 
         marginNote: noteAt(1),
       },
     ];
-  }, [exhibits, marginNotes]);
+  }, [exhibits, marginNotes, shareToken]);
 
   const [page, setPage] = useState(0);
 
