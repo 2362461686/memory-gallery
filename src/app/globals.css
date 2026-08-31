@@ -370,6 +370,44 @@
 .manga-sfx-soft { color: var(--sky); text-shadow: 2px 2px 0 var(--ink); transform: rotate(4deg) scale(0.9); }
 .manga-sfx-hollow { color: transparent; -webkit-text-stroke: 2px var(--ink); text-shadow: none; }
 
+/* ---------- ベタ(实心黑格) ---------- */
+
+/* 少年漫画一页里总有一格是压成实心黑的:它是视觉锚,也是节奏里的重音。
+   这一格的线稿是白的,所以底色必须**始终**是墨 —— 不能做成"先白后翻黑",
+   否则白线画在白纸上,那段"线条自己描出来"的演出整段看不见。 */
+.panel-beta {
+  background-color: var(--ink);
+}
+
+/* ベタ格上的拟声词:底色恒等于 --ink,所以描边必须用 --paper。
+   沿用默认的 --ink 描边等于黑描边压在黑底上 —— 明色下看不见轮廓,
+   夜刊下这一格翻成浅色,黄字配浅描边更是糊成一团。两个主题都验过。 */
+.panel-beta .manga-sfx {
+  color: var(--sun);
+  -webkit-text-stroke: 1px var(--paper);
+  text-shadow: 3px 3px 0 var(--paper), -1px -1px 0 var(--paper);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* ベタフラッシュ:落地那一瞬间整格白闪,再让墨渗回来。
+     一次性,不循环 —— 持续动效的名额留给決めゴマ。 */
+  .panel-beta::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    background: var(--paper);
+    pointer-events: none;
+    opacity: 0;
+    animation: betaFlash 0.62s ease-out 0.37s forwards;
+  }
+  @keyframes betaFlash {
+    0%   { opacity: 1; }
+    28%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+}
+
 /* ---------- 集中线(强调格) ---------- */
 
 .focus-lines::before {
@@ -537,6 +575,17 @@
     50%      { opacity: 0.75; transform: scale(1.06); }
   }
 
+  /* 同上,但不减墨。
+     fx-focus-pulse 的 0.35 是给阅读器里压在照片上的强调格调的;
+     首页的決めゴマ底下是空纸,再乘 0.35 就只剩一层几乎看不见的灰。 */
+  .fx-focus-strong::before {
+    animation: fxFocusStrong 3.4s ease-in-out infinite;
+  }
+  @keyframes fxFocusStrong {
+    0%, 100% { opacity: 0.85; transform: scale(1); }
+    50%      { opacity: 1;    transform: scale(1.05); }
+  }
+
   /* 拟声词抖动 —— 声音在响 */
   .fx-sfx-shake {
     animation: fxSfxShake 2.2s ease-in-out infinite;
@@ -643,15 +692,17 @@
     }
   }
 
-  /* 拟声词跟着自己那一格落地时响 */
-  .sfx-land {
+  /* 拟声词跟着自己那一格落地时响。
+     只做缩放不做旋转 —— 旋转交给内层的 .manga-sfx,
+     这样決めゴマ的持续抖动(.fx-sfx-shake)能挂在内层,两段动画互不覆盖。 */
+  .sfx-drop {
     opacity: 0;
-    animation: sfxLand 0.44s cubic-bezier(0.34, 1.7, 0.64, 1) forwards;
+    animation: sfxDrop 0.44s cubic-bezier(0.34, 1.7, 0.64, 1) forwards;
   }
-  @keyframes sfxLand {
-    from { opacity: 0; transform: rotate(-6deg) scale(0.2); }
-    60%  { opacity: 1; transform: rotate(-8deg) scale(1.22); }
-    to   { opacity: 1; transform: rotate(-6deg) scale(1); }
+  @keyframes sfxDrop {
+    from { opacity: 0; transform: scale(0.2); }
+    60%  { opacity: 1; transform: scale(1.22); }
+    to   { opacity: 1; transform: scale(1); }
   }
 
   /* 线条自己描出来 —— 你看着这页漫画被画出来。

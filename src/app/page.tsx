@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { PANEL_ART } from "@/components/home/PanelArt";
-import Halftone from "@/components/home/Halftone";
 
 /**
  * 首页的记忆点(signature):一页会自己装订起来的漫画。
@@ -12,19 +11,27 @@ import Halftone from "@/components/home/Halftone";
  * 大胆只花在这一处;页面其余部分一律安静。
  */
 
-// 刻意选最没什么故事的瞬间 —— 平凡才是论点
+// 刻意选最没什么故事的瞬间 —— 平凡才是论点。
+//
+// 少年漫画的一页不是五个同等大小的格子平摊 —— 它有轻重:
+// 一格压成实心黑(ベタ)当视觉锚,一格是決めゴマ(集中線+出血+大拟声词)当落点,
+// 其余保持安静。这三样都是印刷语汇,不需要任何角色素材。
 const panels = [
   { caption: "周二的天", sfx: "唰", sfxClass: "manga-sfx-soft", tone: "sky", tilt: "-1.6deg" },
   { caption: "加班那碗面", sfx: "", sfxClass: "", tone: "sun", tilt: "1.4deg" },
-  { caption: "回家路上", sfx: "咔嚓", sfxClass: "", tone: "dots", tilt: "-1.1deg" },
+  // ベタ格:整页唯一的实心黑。原来是 tone-dots,那是灰的,压不住场
+  { caption: "回家路上", sfx: "咔嚓", sfxClass: "manga-sfx-loud", tone: "beta", tilt: "-1.1deg" },
   { caption: "猫又睡了", sfx: "", sfxClass: "", tone: "sun", tilt: "1.8deg" },
-  { caption: "没发出去的那条消息", sfx: "叮", sfxClass: "manga-sfx-soft", tone: "sky", tilt: "-1.3deg" },
+  // 決めゴマ:紧挨标题格,是视线落到 CTA 之前的最后一击。
+  // 中空字:一声没送达的提示音,回响但没落地 —— 跟这格的文案是同一件事
+  { caption: "没发出去的那条消息", sfx: "叮", sfxClass: "manga-sfx-hollow", tone: "sky", tilt: "-1.3deg", hero: true },
 ];
 
 const toneClass: Record<string, string> = {
   sky: "bg-[color-mix(in_srgb,var(--sky)_38%,var(--paper))]",
   sun: "bg-[color-mix(in_srgb,var(--sun)_34%,var(--paper))]",
   dots: "tone-dots",
+  beta: "panel-beta",
 };
 
 const areas = [
@@ -51,30 +58,49 @@ export default function Home() {
             >
               {panels.map((p, i) => {
                 const Art = PANEL_ART[i];
+                const beta = p.tone === "beta";
                 return (
                 <figure
                   key={p.caption}
-                  className={`manga-panel relative overflow-hidden ${toneClass[p.tone]}`}
+                  className={`manga-panel relative overflow-hidden ${toneClass[p.tone]} ${
+                    // 決めゴマ:集中線收束。
+                    // ⛔ 试过出血(负边距顶到刊头内缘)——这一页的"纸边"就是刊头那道框,
+                    // 负边距把框撞断了,看着像渲染坏了不像出血。已撤。
+                    p.hero ? "focus-lines fx-focus-strong" : ""
+                  }`}
                   style={
                     { "--drop-tilt": p.tilt, gridArea: areas[i] } as React.CSSProperties
                   }
                 >
-                  {/* 线稿:格子落地之后才开始描 */}
+                  {/* 线稿:格子落地之后才开始描。ベタ格上是白线,所以那一格必须先黑 */}
                   <Art
-                    className="absolute inset-0 w-full h-full p-2 text-[var(--ink)]"
+                    className={`absolute inset-0 w-full h-full p-2 ${
+                      beta ? "text-[var(--paper)]" : "text-[var(--ink)]"
+                    }`}
                     style={{ ["--ink-delay" as string]: `${0.2 + i * 0.16}s` }}
                   />
-                  {/* 旁白框:交代这是哪个瞬间 */}
-                  <figcaption className="absolute top-0 left-0 bg-[var(--paper)] border-r-[3px] border-b-[3px] border-[var(--ink)] px-2 py-[3px] text-[0.6rem] sm:text-[0.7rem] font-black max-w-[88%] truncate">
+                  {/* 旁白框:交代这是哪个瞬间。ベタ格上仍是白框黑字 —— 漫画里就是这么压的 */}
+                  <figcaption className="absolute top-0 left-0 z-10 bg-[var(--paper)] text-[var(--ink)] border-r-[3px] border-b-[3px] border-[var(--ink)] px-2 py-[3px] text-[0.6rem] sm:text-[0.7rem] font-black max-w-[88%] truncate">
                     {p.caption}
                   </figcaption>
 
                   {p.sfx && (
+                    // 外层只管"跟着自己那一格落地",内层才是字本身 ——
+                    // 两个 animation 分层,否则持续抖动会被落地动画整个覆盖掉
                     <span
-                      className={`sfx-land manga-sfx ${p.sfxClass} absolute bottom-2 right-2 text-xl sm:text-3xl pointer-events-none`}
+                      className={`sfx-drop absolute z-20 pointer-events-none ${
+                        // 決めゴマ的拟声词挪到左下:右下和手机的线缠在一起,两边都读不清
+                        p.hero ? "bottom-4 left-4 sm:bottom-6 sm:left-6" : "bottom-2 right-2"
+                      }`}
                       style={{ animationDelay: `${0.34 + i * 0.14}s` }}
                     >
-                      {p.sfx}
+                      <span
+                        className={`block manga-sfx ${p.sfxClass} ${
+                          p.hero ? "fx-sfx-shake text-2xl sm:text-6xl" : "text-xl sm:text-3xl"
+                        }`}
+                      >
+                        {p.sfx}
+                      </span>
                     </span>
                   )}
                 </figure>
