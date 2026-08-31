@@ -283,6 +283,30 @@ export function createExhibitionPost(exhibitionId: string, postId: string) {
   return ep;
 }
 
+/**
+ * 书架卡片的封面。
+ * 册子自己的 coverImage 为空时退回册里第一张照片 —— 一张空封面比没有封面更糟,
+ * 它让书架看起来像坏了。一次读库批量算完,不要每张卡片各查一次。
+ */
+export function getExhibitionCovers(exhibitionIds: string[]) {
+  const db = readDB();
+  const byId = new Map(db.posts.map((p) => [p.id, p]));
+  const covers: Record<string, string | undefined> = {};
+
+  for (const id of exhibitionIds) {
+    const ex = db.exhibitions.find((e) => e.id === id);
+    if (ex?.coverImage) { covers[id] = ex.coverImage; continue; }
+    const eps = db.exhibitionPosts.filter((ep) => ep.exhibitionId === id);
+    let found: string | undefined;
+    for (const ep of eps) {
+      const first = mediaListOf(byId.get(ep.postId) ?? ({ mediaUrls: "[]" } as PostRecord))[0];
+      if (first) { found = first; break; }
+    }
+    covers[id] = found;
+  }
+  return covers;
+}
+
 export function getExhibitionPostCounts(exhibitionIds: string[]) {
   const db = readDB();
   const counts: Record<string, number> = {};
